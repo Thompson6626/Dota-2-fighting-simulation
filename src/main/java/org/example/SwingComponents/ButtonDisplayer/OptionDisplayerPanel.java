@@ -1,5 +1,6 @@
 package org.example.SwingComponents.ButtonDisplayer;
 
+import org.example.ItemClass.Item;
 import org.example.SwingComponents.HeroUpdateListener;
 import org.example.SwingComponents.ItemUpdateListener;
 import org.example.WebScrape.DataFetcher;
@@ -91,7 +92,7 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
             for(JButton button: buttons){
                 if(e.getSource() == button){
 
-                    DataFetcher.updateAccordingToItem(hero,button.getText());
+                    Item item = DataFetcher.updateAccordingToItem(hero,button.getText());
 
                     if (SwingUtilities.getWindowAncestor(OptionDisplayerPanel.this) instanceof JFrame frame) {
                         frame.dispose();

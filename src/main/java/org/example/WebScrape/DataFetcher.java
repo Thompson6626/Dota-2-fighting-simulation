@@ -2,6 +2,7 @@ package org.example.WebScrape;
 
 import org.example.HeroClass.Hero;
 import org.example.HeroClass.PrimaryAttribute;
+import org.example.ItemClass.Item;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -322,9 +323,10 @@ public class DataFetcher {
             "Magic Resistance"
     };
 
-    public static void updateAccordingToItem(Hero hero,String itemName){
+    public static Item updateAccordingToItem(Hero hero,String itemName){
         String url = "https://dota2.fandom.com/wiki/" + itemName;
 
+        Item item = new Item();
         try{
 
             Document doc = Jsoup.connect(url).get();
@@ -339,6 +341,8 @@ public class DataFetcher {
         }catch (IOException e){
             throw new RuntimeException(e);
         }
+
+        return item;
     }
 
 

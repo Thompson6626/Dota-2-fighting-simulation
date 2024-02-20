@@ -1,5 +1,9 @@
 package org.example.HeroClass;
 
+import org.example.ItemClass.Item;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import static org.example.WebScrape.DataFetcher.EXTRA_DAMAGE_PER_ATTRIBUTE_FOR_UNIVERSAL;
 import static org.example.WebScrape.DataFetcher.EXTRA_ARMOR_PER_AGILITY;
@@ -81,50 +85,13 @@ public class Hero {
 
     public int bonusItemDamage = 0;
 
-
     public int bonusItemMagicRes = 0;
     public int bonusItemArmor = 0;
 
     public int bonusItemAtkSpeed = 0;
 
-    // Item or hero passive abilities effects
-
-    public int lifeStealPercentage = 0;
-
-
-
-    public int stun_Chance = 0;
-    public int stun_BonusDamage = 0;
-    public int missChanceArea = 0;
-    public int dodgeChance = 0;
-
-    public int critChance = 0;
-    public int critPercentage = 0;
-    public int lifesteal = 0;
-
-    public int javelinProcPercentage= 0;
-    public int javelingProcDamage = 0;
-
-    public int maelstromProcPercentage = 0;
-
-    public int mjolnirProcPercentage = 0;
-
-    public int gleipnirProcPercentage = 0;
-
-    public int monkeyKingBarProcPercentage = 0;
-
-    public int damageBlockPercentage = 0;
-    public int damageBlockValue = 0;
-
-    public int regenLifestealReductionArea = 0;
-
-    public int regenLifestealReductionOnHit = 0;
-
-    public int returnDamagePercentage = 0;
-
-    public int manaBurnValue = 0;
-    public int manaBurnDamage = 0;
-
+    // Maximum number of items is 6
+    public List<Item> items = new ArrayList<>();
 
     private static final Random RANDOM_GENERATOR = new Random();
 
@@ -185,6 +152,7 @@ public class Hero {
         maxManaOnCurrentLevel = (int) (baseMana + ((intelligenceGained + bonusItemIntelligence) * EXTRA_MANA_PER_INTELLIGENCE_POINT));
         maxManaRegenOnCurrentLevel = baseManaRegen + ((intelligenceGained + bonusItemIntelligence) * EXTRA_MANA_REGEN_PER_INTELLIGENCE_POINT);
 
+        // Assigns the current hp and mana values to its maximum according to the level
         toMaxAccordingToLevel();
 
         currentMagicRes = baseMagicResistance + ((intelligenceGained + bonusItemIntelligence) * EXTRA_MAGIC_RES_PER_INTELLIGENCE_POINT);
@@ -201,7 +169,7 @@ public class Hero {
         currentAttackRate = roundToFixedDecimal( 1 / currentAttackSpeed ,3);
 
 
-        currentArmor = baseArmor + (agilityGained * EXTRA_ARMOR_PER_AGILITY);
+        currentArmor = baseArmor + (agilityGained * EXTRA_ARMOR_PER_AGILITY) + bonusItemArmor;
         currentArmor = roundToFixedDecimal(currentArmor,2);
 
         // https://dota2.fandom.com/wiki/Attack_Speed
