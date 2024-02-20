@@ -8,7 +8,26 @@ import java.util.concurrent.*;
 public class Fight {
 
 
-    public static int fightHeroes(Hero firstHero, Hero secondHero) {
+    public static int[] fight(Hero firstHero,Hero secHero,int times){
+
+        int leftWon = 0;
+        int rightWon = 0;
+        for (int i = 0; i < times ; i++) {
+            int res = fightHeroes(firstHero, secHero);
+            if (res == -1) { // -1 If the left hero won
+                leftWon++;
+            } else {
+                rightWon++;
+            }
+            firstHero.toMaxAccordingToLevel();
+            secHero.toMaxAccordingToLevel();
+        }
+
+        return new int[]{leftWon,rightWon};
+    }
+
+
+    private static int fightHeroes(Hero firstHero, Hero secondHero) {
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(3);
         CompletableFuture<Void> fightCompleted = new CompletableFuture<>();
 

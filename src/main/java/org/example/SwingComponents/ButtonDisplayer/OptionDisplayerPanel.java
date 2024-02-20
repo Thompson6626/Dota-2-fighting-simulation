@@ -3,6 +3,7 @@ package org.example.SwingComponents.ButtonDisplayer;
 import org.example.ItemClass.Item;
 import org.example.SwingComponents.HeroUpdateListener;
 import org.example.SwingComponents.ItemUpdateListener;
+import org.example.SwingComponents.NeutralUpdateListener;
 import org.example.WebScrape.DataFetcher;
 import org.example.HeroClass.Hero;
 
@@ -17,6 +18,7 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
 
     private HeroUpdateListener heroListener = null;
     private ItemUpdateListener itemListener = null;
+    private NeutralUpdateListener neutralListener = null;
     private JButton buttonClicked = null;
     private final List<String> options;
     private static final Font NAME_FONT = new Font("Optimus Princeps", Font.PLAIN, 20);
@@ -25,6 +27,7 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
     private final List<JButton> buttons = new ArrayList<>();
     Hero hero;
 
+    // Display for heroes
     public OptionDisplayerPanel(
             HeroUpdateListener heroListener,
             Hero hero,
@@ -35,6 +38,7 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
         this.options = heroNames;
         initializeGUI();
     }
+    // Display for normal items
     public OptionDisplayerPanel(
             ItemUpdateListener itemListener,
             Hero hero,
@@ -42,7 +46,22 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
             JButton buttonClicked
     ){
         this.itemListener = itemListener;
+        this.hero = hero;
         this.options = itemNames;
+        this.buttonClicked = buttonClicked;
+        initializeGUI();
+    }
+
+    //Display for neutral items
+    public OptionDisplayerPanel(
+            NeutralUpdateListener neutralListener,
+            Hero hero,
+            List<String> neutralNames,
+            JButton buttonClicked
+    ){
+        this.neutralListener = neutralListener;
+        this.hero = hero;
+        this.options = neutralNames;
         this.buttonClicked = buttonClicked;
         initializeGUI();
     }
@@ -73,34 +92,30 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
     public void actionPerformed(ActionEvent e) {
 
         // If the hero buttons was clicked
-        if(heroListener != null){
-            for (JButton button : buttons) {
-                if(e.getSource() == button){
+        for (JButton button : buttons) {
+            if(e.getSource() == button){
 
+                if(heroListener != null){
                     DataFetcher.fillHeroStats(hero,button.getText());
-
                     notifyHeroUpdated(hero);
-                    // Dispose the window
-                    if (SwingUtilities.getWindowAncestor(OptionDisplayerPanel.this) instanceof JFrame frame) {
-                        frame.dispose();
-                    }
                 }
-            }
-        }
-        // If the items buttons was clicked
-        if(itemListener != null){
-            for(JButton button: buttons){
-                if(e.getSource() == button){
-
+                if(itemListener != null || neutralListener != null){
                     Item item = DataFetcher.updateAccordingToItem(hero,button.getText());
 
-                    if (SwingUtilities.getWindowAncestor(OptionDisplayerPanel.this) instanceof JFrame frame) {
-                        frame.dispose();
+                    if(itemListener != null ){
+                        notifyItemUpdated();
+                    }else if(neutralListener != null){
+                        notifyNeutralUpdated();
                     }
+
+                }
+
+                // Dispose the window
+                if (SwingUtilities.getWindowAncestor(OptionDisplayerPanel.this) instanceof JFrame frame) {
+                    frame.dispose();
                 }
             }
         }
-
 
     }
     private void notifyHeroUpdated(Hero hero) {
@@ -108,5 +123,8 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
     }
     private void notifyItemUpdated(){
         itemListener.onItemUpdate();
+    }
+    private void notifyNeutralUpdated(){
+        neutralListener.onNeutralUpdate();
     }
 }

@@ -42,6 +42,9 @@ public class Hero {
     public double BAT;
 
     public double currentAttackSpeed;
+    /**
+     * Time between attacks
+     */
     public double currentAttackRate;
     public int currentLevel = 1;
 

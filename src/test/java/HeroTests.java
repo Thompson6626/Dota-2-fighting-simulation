@@ -17,7 +17,6 @@ public class HeroTests {
         marci = new Hero();
 
         DataFetcher.fillHeroStats(marci,"Marci");
-        marci.heroUpdateToMatchLevel(1);
     }
 
 
@@ -90,8 +89,6 @@ public class HeroTests {
         Hero arcWarden = new Hero();
         DataFetcher.fillHeroStats(arcWarden,"Arc Warden");
 
-        arcWarden.heroUpdateToMatchLevel(1);
-
         assertEquals(51,arcWarden.currentDamageLow);
         assertEquals(57,arcWarden.currentDamageHigh);
 
@@ -108,8 +105,6 @@ public class HeroTests {
         Hero alchemist = new Hero();
         DataFetcher.fillHeroStats(alchemist,"Alchemist");
 
-        alchemist.heroUpdateToMatchLevel(1);
-
         assertEquals(50,alchemist.currentDamageLow);
         assertEquals(56,alchemist.currentDamageHigh);
 
@@ -125,8 +120,6 @@ public class HeroTests {
 
         Hero pugna = new Hero();
         DataFetcher.fillHeroStats(pugna,"Pugna");
-
-        pugna.heroUpdateToMatchLevel(1);
 
         assertEquals(47,pugna.currentDamageLow);
         assertEquals(54,pugna.currentDamageHigh);
@@ -153,11 +146,11 @@ public class HeroTests {
 
         Hero sniper = new Hero();
         DataFetcher.fillHeroStats(sniper,"Sniper");
-        sniper.heroUpdateToMatchLevel(1);
 
         assertFalse(sniper.isMelee);
-        assertNotEquals(16,sniper.naturalDamageBlock);
-        assertNotEquals(50,sniper.naturalDamageBlockPercentage);
+
+        assertEquals(0,sniper.naturalDamageBlock);
+        assertEquals(0,sniper.naturalDamageBlockPercentage);
 
     }
 
@@ -167,15 +160,14 @@ public class HeroTests {
     public void testOneSidedFight(){
         Hero puck = new Hero();
         DataFetcher.fillHeroStats(puck,"Puck");
-        puck.heroUpdateToMatchLevel(1);
 
         marci.heroUpdateToMatchLevel(15);
 
-        int res = Fight.fightHeroes(marci , puck);
-        int res2 = Fight.fightHeroes(puck , marci);
+        int[] res = Fight.fight(marci , puck,1);
+        int[] res2 = Fight.fight(puck , marci,1);
 
-        assertEquals(-1,res);
-        assertEquals(1,res2);
+        assertArrayEquals(new int[]{1,0},res);
+        assertArrayEquals(new int[]{0,1},res2);
     }
 
     @DisplayName("Testing one sided fight 15 times")
@@ -183,29 +175,13 @@ public class HeroTests {
     public void testOneSidedFight10Times(){
         Hero puck = new Hero();
         DataFetcher.fillHeroStats(puck,"Puck");
-        puck.heroUpdateToMatchLevel(1);
         marci.heroUpdateToMatchLevel(15);
 
-        int marciWins = 0;
-        int puckWins = 0;
+        int[] res = Fight.fight(marci,puck,15);
+        int[] res2 = Fight.fight(puck,marci,15);
 
-        for(int i=0; i < 15;i++){
-            int res = Fight.fightHeroes(marci , puck);
-            int res2 = Fight.fightHeroes(puck , marci);
-
-
-            if(res == -1) marciWins++;
-            else if (res == 1) puckWins++;
-
-            if(res2 == -1) puckWins++;
-            else if (res2 == 1)marciWins++;
-
-            marci.toMaxAccordingToLevel();
-            puck.toMaxAccordingToLevel();
-        }
-
-        assertEquals(30,marciWins);
-        assertEquals(0,puckWins);
+        assertArrayEquals(new int[]{15,0},res);
+        assertArrayEquals(new int[]{0,15},res2);
     }
 
     //Testing on chaos knight because its the hero with the largest damage spread , difference of 30
@@ -220,22 +196,10 @@ public class HeroTests {
         DataFetcher.fillHeroStats(ck1,"Chaos Knight");
         DataFetcher.fillHeroStats(ck2,"Chaos Knight");
 
-        ck1.heroUpdateToMatchLevel(1);
-        ck2.heroUpdateToMatchLevel(1);
+        int[] res = Fight.fight(ck1,ck2,15);
 
-        int ck1Wins = 0;
-        int ck2Wins = 0;
-
-        for(int i=0; i < 15;i++){
-            int res = Fight.fightHeroes(ck1 , ck2);
-
-            if(res == -1) ck1Wins++;
-            else if (res == 1) ck2Wins++;
-            ck1.toMaxAccordingToLevel();
-            ck2.toMaxAccordingToLevel();
-        }
-        assertNotEquals(ck1Wins,ck2Wins);
-
+        assertNotEquals(0,res[0]);
+        assertNotEquals(0,res[1]);
     }
 
     @Test
@@ -247,17 +211,10 @@ public class HeroTests {
         DataFetcher.fillHeroStats(naga1,"Naga Siren");
         DataFetcher.fillHeroStats(naga2,"Naga Siren");
 
-        naga1.heroUpdateToMatchLevel(1);
-        naga2.heroUpdateToMatchLevel(1);
+        int[] res = Fight.fight(naga1,naga2,15);
 
-        for (int i = 0; i < 5; i++) {
-            int res = Fight.fightHeroes(naga1,naga2);
-            if(res == -1) System.out.println("First naga won");
-            else if (res == 1) System.out.println("Second naga won");
-            naga1.toMaxAccordingToLevel();
-            naga2.toMaxAccordingToLevel();
-        }
-
+        System.out.println("Naga 1 won "+res[0]);
+        System.out.println("Naga 2 won "+res[1]);
     }
 
 

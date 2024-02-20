@@ -3,6 +3,7 @@ package org.example.SwingComponents;
 import org.example.Fight;
 import org.example.HeroClass.Hero;
 import org.example.SwingComponents.ButtonDisplayer.OptionDisplayerFrame;
+import org.example.SwingComponents.Buttons.RoundButton;
 import org.example.WebScrape.DataFetcher;
 
 import javax.swing.*;
@@ -16,10 +17,11 @@ import java.util.List;
 import static org.example.WebScrape.DataFetcher.MAXIMUM_HERO_LEVEL;
 
 
-public class MainPanel extends JPanel implements ActionListener, HeroUpdateListener ,ItemUpdateListener{
+public class MainPanel extends JPanel implements ActionListener,HeroUpdateListener,ItemUpdateListener,NeutralUpdateListener{
 
     private static final List<String> HERO_NAMES = DataFetcher.getAllDotaHeroNames();
     private static final List<String> ITEM_NAMES = DataFetcher.getAllItems();
+    private static final List<String> NEUTRAL_ITEM_NAMES = DataFetcher.getAllNeutralItems();
     private static final int SCREEN_WIDTH = 1300;
     private static final int SCREEN_HEIGHT = 700;
     private static final Dimension SCREEN_SIZE = new Dimension(SCREEN_WIDTH,SCREEN_HEIGHT);
@@ -38,15 +40,18 @@ public class MainPanel extends JPanel implements ActionListener, HeroUpdateListe
 
     private JButton lastButtonClicked = null;
 
-    private JLabel[] levelText = new JLabel[2];
-    private JComboBox<Integer>[] comboBoxes = new JComboBox[2];
+    private final JLabel[] levelText = new JLabel[2];
+    private final JComboBox<Integer>[] comboBoxes = new JComboBox[2];
     private JFormattedTextField numberOfFights;
 
     JButton[][] itemsButtons = new JButton[2][6];
+    private final JButton[] neutralButtons = new JButton[2];
     private final int itemsButtonWidth = 100;
     private final int itemsButtonHeight = 60;
 
     JLabel timesLabel;
+
+    JLabel[] heroWins = new JLabel[2];
 
     MainPanel(){
         initializeGui();
@@ -83,12 +88,6 @@ public class MainPanel extends JPanel implements ActionListener, HeroUpdateListe
             this.add(comboBox);
         }
 
-        for (int j = 0; j < levelText.length; j++) {
-            JLabel label = new JLabel("Level");
-
-        }
-
-
         comboBoxes[0].setBounds(
                 heroChooseButtons[0].getX() + 330,
                 112 ,
@@ -102,6 +101,29 @@ public class MainPanel extends JPanel implements ActionListener, HeroUpdateListe
                 100,
                 40
         );
+
+        for(int i=0;i<levelText.length;i++){
+            JLabel label = new JLabel("Level");
+            label.setFont(new Font("Work Sans",Font.PLAIN,20));
+            this.add(label);
+            levelText[i] = label;
+        }
+        int levelTextWidth = 80;
+        int levelTextHeight = 50;
+        levelText[0].setBounds(
+                comboBoxes[0].getX() + comboBoxes[0].getWidth()/4,
+                comboBoxes[0].getY() - levelTextHeight,
+                levelTextWidth,
+                levelTextHeight
+        );
+
+        levelText[1].setBounds(
+                comboBoxes[1].getX() + comboBoxes[1].getWidth()/4,
+                comboBoxes[1].getY() - levelTextHeight,
+                levelTextWidth,
+                levelTextHeight
+        );
+
 
 
 
@@ -134,24 +156,59 @@ public class MainPanel extends JPanel implements ActionListener, HeroUpdateListe
         for (int row = 0; row < 2; row++) {
             for (int col = 0; col < 6; col++) {
                 // Determine the starting position based on the column index
-                int startX = (col < 3) ? 100 : SCREEN_WIDTH - 400;
+                int startX = (row < 1) ? 100 : SCREEN_WIDTH - 400;
                 int startY = 200;
 
                 // Calculate the actual position of the button
                 int x = startX + (col % 3) * itemsButtonWidth;
-                int y = startY + row * itemsButtonHeight;
+                int y = startY + (col < 3 ? 0 : itemsButtonHeight);
 
                 // Create and configure the button
                 JButton button = new JButton();
                 button.setFocusable(false);
                 button.setBounds(x, y, itemsButtonWidth, itemsButtonHeight);
                 button.addActionListener(this);
+                button.setBackground(new Color(47,53,56));
                 this.add(button);
 
                 // Add the button to the array
                 itemsButtons[row][col] = button;
             }
         }
+
+        for (int in = 0; in < neutralButtons.length; in++) {
+            JButton button = new RoundButton("");
+            button.setFocusable(false);
+            button.addActionListener(this);
+            this.add(button);
+            neutralButtons[in]=button;
+        }
+
+
+
+        neutralButtons[0].setBounds(
+                itemsButtons[0][2].getX() + 110 ,
+                itemsButtons[0][2].getY() + itemsButtons[0][2].getHeight()/2,
+                50,
+                50
+        );
+
+        neutralButtons[1].setBounds(
+                itemsButtons[1][0].getX() - 60 ,
+                itemsButtons[1][0].getY() + itemsButtons[1][0].getHeight()/2,
+                50,
+                50
+        );
+
+        for (int i = 0; i < heroWins.length ; i++) {
+            JLabel label = new JLabel("0");
+            label.setFont(new Font("Cascadia Code",Font.PLAIN,50));
+            this.add(label);
+            heroWins[i] = label;
+        }
+        heroWins[0].setBounds(350,500,100,100);
+
+        heroWins[1].setBounds(SCREEN_WIDTH - 400, 500 , 100 , 100);
 
     }
 
@@ -182,10 +239,25 @@ public class MainPanel extends JPanel implements ActionListener, HeroUpdateListe
                             ITEM_NAMES,
                             itemsButtons[i][j]
                             );
+                    lastButtonClicked = itemsButtons[i][j];
                     break;
                 }
             }
         }
+
+        for(int i = 0; i < neutralButtons.length; i++){
+            if(e.getSource()== neutralButtons[i]){
+                new OptionDisplayerFrame(
+                        this,
+                        heroes[i],
+                        NEUTRAL_ITEM_NAMES,
+                        neutralButtons[i]
+                );
+                lastButtonClicked = neutralButtons[i];
+                break;
+            }
+        }
+
 
         //Any of the level comboboxes
         for (int j = 0; j < comboBoxes.length; j++) {
@@ -201,18 +273,10 @@ public class MainPanel extends JPanel implements ActionListener, HeroUpdateListe
         if(e.getSource() == fightButton){
             int times = Integer.parseInt(numberOfFights.getText().trim());
 
-            int leftWon = 0;
-            int rightWon = 0;
-            for (int i = 0; i < times ; i++) {
-                int res = Fight.fightHeroes(heroes[0],heroes[1]);
-                if(res==-1){
-                    rightWon++;
-                }else{
-                    leftWon++;
-                }
-                heroes[0].toMaxAccordingToLevel();
-                heroes[1].toMaxAccordingToLevel();
-            }
+            int[] res = Fight.fight(heroes[0],heroes[1],times);
+
+            heroWins[0].setText(String.valueOf(res[0]));
+            heroWins[1].setText(String.valueOf(res[1]));
         }
 
 
@@ -221,7 +285,7 @@ public class MainPanel extends JPanel implements ActionListener, HeroUpdateListe
 
     }
 
-    private static JFormattedTextField createPositiveIntegerField(int width) {
+    private JFormattedTextField createPositiveIntegerField(int width) {
         JFormattedTextField textField = null;
         try {
             MaskFormatter formatter = new MaskFormatter("######"); // 6 digits
@@ -246,11 +310,19 @@ public class MainPanel extends JPanel implements ActionListener, HeroUpdateListe
             }
         }
 
+        for(JLabel label:heroWins) {
+            label.setText("0");
+        }
+
+
     }
-
-
     @Override
     public void onItemUpdate() {
+
+    }
+
+    @Override
+    public void onNeutralUpdate() {
 
     }
 }

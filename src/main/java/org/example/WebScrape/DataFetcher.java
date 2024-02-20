@@ -31,9 +31,9 @@ public class DataFetcher {
     public static final int MAXIMUM_HERO_LEVEL = getMaximumPossibleHeroLevel();
 
     public static List<List<Number>> getAttributeGainsConstants() {
-
+        String url ="https://dota2.fandom.com/wiki/Attributes";
         try {
-            Document doc = Jsoup.connect("https://dota2.fandom.com/wiki/Attributes").get();
+            Document doc = Jsoup.connect(url).get();
 
             // 20 for strength
             // 21 for agility
@@ -103,9 +103,9 @@ public class DataFetcher {
 
     public static List<String> getAllDotaHeroNames() {
         List<String> heroNames = new ArrayList<>();
-
+        String url = "https://dota2.fandom.com/wiki/Table_of_hero_attributes";
         try {
-            Document doc = Jsoup.connect("https://dota2.fandom.com/wiki/Table_of_hero_attributes").get();
+            Document doc = Jsoup.connect(url).get();
 
             doc.selectFirst("table[style='width:100%; text-align:center; font-size:88%;']")
                     .selectFirst("tbody")
@@ -139,6 +139,7 @@ public class DataFetcher {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        hero.heroUpdateToMatchLevel(1);
     }
 
     private static void setManaAndManaRegen(Hero hero, Document doc) {
@@ -188,7 +189,9 @@ public class DataFetcher {
 
         hero.baseDamageLow = Integer.parseInt(damageAtLevelTxt[0]);
         hero.baseDamageHigh = Integer.parseInt(damageAtLevelTxt[1]);
+
     }
+
 
     private static void setMagicResistance(Hero hero, Document doc) {
         Elements magicResistanceAtLevel1 = doc.select("*[style=\"font-size:80%;\"]");
@@ -257,7 +260,10 @@ public class DataFetcher {
         }
     }
 
-
+    /**
+     *
+     * @return The maximum level possible for a heroe
+     */
     public static int getMaximumPossibleHeroLevel() {
         String url = "https://dota2.fandom.com/wiki/Experience#:~:text=Heroes%20can%20gain%20a%20total,level%20a%20hero%20can%20reach.";
 
@@ -274,6 +280,10 @@ public class DataFetcher {
         }
     }
 
+    /**
+     * Gets all item Names
+     * @return A list containing all the names of the items
+     */
     public static List<String> getAllItems() {
         List<String> items = new ArrayList<>();
         String url = "https://dota2.fandom.com/wiki/Items";
@@ -281,12 +291,13 @@ public class DataFetcher {
         try {
             Document doc = Jsoup.connect(url).get();
 
+
             Elements itemsClass = doc.select("div[class=\"itemlist\"]");
 
+            // Past 11 theres items that are not important (unused , removed , not released)
             List<Element> listElements = itemsClass.subList(0, 11);
 
             listElements.forEach(el -> extractText(el.text() , items));
-
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -307,6 +318,52 @@ public class DataFetcher {
         }
 
     }
+
+    public static List<String> getAllNeutralItems(){
+        List<String> neutrals = new ArrayList<>();
+        String url = "https://dota2.fandom.com/wiki/Neutral_Items";
+        try{
+            Document doc = Jsoup.connect(url).get();
+
+            Elements rangeOfActiveNeutrals = doc.select("span[class=\"mw-headline\"]");
+
+            int start = -1;
+            int end = -1;
+            for (int i = 0 ,len = rangeOfActiveNeutrals.size(); i < len; i++) {
+                Element neutral = rangeOfActiveNeutrals.get(i);
+                if (start == -1 && neutral.text().equals("Tier 1")) {
+                    start = i;
+                } else if (neutral.text().equals("Inactive List")) {
+                    end = i - start;
+                    break;
+                }
+            }
+
+            Elements itemListClass = doc.select("div[class=\"itemlist\"]");
+
+            Elements divsWithClass = new Elements();
+
+            for (int k = 0; k < end; k++) {
+                divsWithClass.add(itemListClass.get(k));
+            }
+
+            Elements neutralItemAnchors = divsWithClass.select("a");
+
+            for(Element element:neutralItemAnchors){
+                String str = element.text();
+                if(!str.isBlank()){
+                    neutrals.add(str);
+                }
+            }
+
+
+        }catch (IOException e){
+            throw new RuntimeException(e);
+        }
+
+        return neutrals;
+    }
+
 
     private static final String[] PASSIVE_KEYWORDS = {
             "Strength",
