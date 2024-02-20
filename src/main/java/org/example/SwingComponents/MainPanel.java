@@ -2,7 +2,8 @@ package org.example.SwingComponents;
 
 import org.example.Fight;
 import org.example.HeroClass.Hero;
-import org.example.SwingComponents.HeroChooser.HeroChooserFrame;
+import org.example.SwingComponents.ButtonDisplayer.OptionDisplayerFrame;
+import org.example.WebScrape.DataFetcher;
 
 import javax.swing.*;
 import javax.swing.text.MaskFormatter;
@@ -10,12 +11,15 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.ParseException;
+import java.util.List;
 
 import static org.example.WebScrape.DataFetcher.MAXIMUM_HERO_LEVEL;
 
 
-public class MainPanel extends JPanel implements ActionListener, HeroUpdateListener {
+public class MainPanel extends JPanel implements ActionListener, HeroUpdateListener ,ItemUpdateListener{
 
+    private static final List<String> HERO_NAMES = DataFetcher.getAllDotaHeroNames();
+    private static final List<String> ITEM_NAMES = DataFetcher.getAllItems();
     private static final int SCREEN_WIDTH = 1300;
     private static final int SCREEN_HEIGHT = 700;
     private static final Dimension SCREEN_SIZE = new Dimension(SCREEN_WIDTH,SCREEN_HEIGHT);
@@ -158,9 +162,28 @@ public class MainPanel extends JPanel implements ActionListener, HeroUpdateListe
         // Any of the hero buttons
         for (int i = 0; i < heroChooseButtons.length; i++) {
             if(e.getSource() == heroChooseButtons[i]){
-                new HeroChooserFrame(this,heroes[i]);
+                new OptionDisplayerFrame(
+                        this,
+                        heroes[i],
+                        HERO_NAMES
+                );
+
                 lastButtonClicked = heroChooseButtons[i];
                 break;
+            }
+        }
+        // Any of the item buttons
+        for(int i = 0 ; i < itemsButtons.length; i++){
+            for(int j = 0 ; j < itemsButtons[i].length ; j++){
+                if(e.getSource() == itemsButtons[i][j]){
+                    new OptionDisplayerFrame(
+                            this,
+                            heroes[i],
+                            ITEM_NAMES,
+                            itemsButtons[i][j]
+                            );
+                    break;
+                }
             }
         }
 
@@ -176,8 +199,6 @@ public class MainPanel extends JPanel implements ActionListener, HeroUpdateListe
         }
 
         if(e.getSource() == fightButton){
-
-
             int times = Integer.parseInt(numberOfFights.getText().trim());
 
             int leftWon = 0;
@@ -192,8 +213,10 @@ public class MainPanel extends JPanel implements ActionListener, HeroUpdateListe
                 heroes[0].toMaxAccordingToLevel();
                 heroes[1].toMaxAccordingToLevel();
             }
-
         }
+
+
+
 
 
     }
@@ -226,4 +249,8 @@ public class MainPanel extends JPanel implements ActionListener, HeroUpdateListe
     }
 
 
+    @Override
+    public void onItemUpdate() {
+
+    }
 }

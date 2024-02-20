@@ -1,7 +1,7 @@
 package org.example.WebScrape;
 
 import org.example.HeroClass.Hero;
-import org.example.HeroClass.MainAttribute;
+import org.example.HeroClass.PrimaryAttribute;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -249,17 +249,18 @@ public class DataFetcher {
         Element element = doc.selectFirst("[data-tracking-label=categories-top-more-2]");
         String mainAttribute = element.text().split(" ")[0];
         switch (mainAttribute) {
-            case "Strength" -> hero.mainAttribute = MainAttribute.STRENGTH;
-            case "Agility" -> hero.mainAttribute = MainAttribute.AGILITY;
-            case "Intelligence" -> hero.mainAttribute = MainAttribute.INTELLIGENCE;
-            case "Universal" -> hero.mainAttribute = MainAttribute.UNIVERSAL;
+            case "Strength" -> hero.primaryAttribute = PrimaryAttribute.STRENGTH;
+            case "Agility" -> hero.primaryAttribute = PrimaryAttribute.AGILITY;
+            case "Intelligence" -> hero.primaryAttribute = PrimaryAttribute.INTELLIGENCE;
+            case "Universal" -> hero.primaryAttribute = PrimaryAttribute.UNIVERSAL;
         }
     }
 
 
     public static int getMaximumPossibleHeroLevel() {
+        String url = "https://dota2.fandom.com/wiki/Experience#:~:text=Heroes%20can%20gain%20a%20total,level%20a%20hero%20can%20reach.";
+
         try {
-            String url = "https://dota2.fandom.com/wiki/Experience#:~:text=Heroes%20can%20gain%20a%20total,level%20a%20hero%20can%20reach.";
             Document doc = Jsoup.connect(url).get();
 
             Elements table = doc.select("table[class=\"wikitable mw-datatable\"]");
@@ -274,9 +275,9 @@ public class DataFetcher {
 
     public static List<String> getAllItems() {
         List<String> items = new ArrayList<>();
+        String url = "https://dota2.fandom.com/wiki/Items";
 
         try {
-            String url = "https://dota2.fandom.com/wiki/Items";
             Document doc = Jsoup.connect(url).get();
 
             Elements itemsClass = doc.select("div[class=\"itemlist\"]");
@@ -284,6 +285,7 @@ public class DataFetcher {
             List<Element> listElements = itemsClass.subList(0, 11);
 
             listElements.forEach(el -> extractText(el.text() , items));
+
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -320,10 +322,24 @@ public class DataFetcher {
             "Magic Resistance"
     };
 
+    public static void updateAccordingToItem(Hero hero,String itemName){
+        String url = "https://dota2.fandom.com/wiki/" + itemName;
+
+        try{
+
+            Document doc = Jsoup.connect(url).get();
 
 
 
 
+
+
+
+
+        }catch (IOException e){
+            throw new RuntimeException(e);
+        }
+    }
 
 
 }

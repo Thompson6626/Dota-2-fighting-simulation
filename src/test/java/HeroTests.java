@@ -3,6 +3,8 @@ import org.example.HeroClass.Hero;
 import org.example.WebScrape.DataFetcher;
 import org.junit.jupiter.api.*;
 
+import javax.xml.crypto.Data;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -206,7 +208,7 @@ public class HeroTests {
         assertEquals(0,puckWins);
     }
 
-    //Testing on chaos knight because its the hero with the largest damage spread , a difference of 30
+    //Testing on chaos knight because its the hero with the largest damage spread , difference of 30
     @DisplayName("Test randomness on 2 Chaos Knights")
     @Test
     @Order(14)
@@ -235,5 +237,28 @@ public class HeroTests {
         assertNotEquals(ck1Wins,ck2Wins);
 
     }
+
+    @Test
+    public void testOn2NagaSirens(){
+
+        Hero naga1 = new Hero();
+        Hero naga2 = new Hero();
+
+        DataFetcher.fillHeroStats(naga1,"Naga Siren");
+        DataFetcher.fillHeroStats(naga2,"Naga Siren");
+
+        naga1.heroUpdateToMatchLevel(1);
+        naga2.heroUpdateToMatchLevel(1);
+
+        for (int i = 0; i < 5; i++) {
+            int res = Fight.fightHeroes(naga1,naga2);
+            if(res == -1) System.out.println("First naga won");
+            else if (res == 1) System.out.println("Second naga won");
+            naga1.toMaxAccordingToLevel();
+            naga2.toMaxAccordingToLevel();
+        }
+
+    }
+
 
 }

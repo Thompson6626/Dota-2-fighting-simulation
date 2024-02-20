@@ -30,6 +30,7 @@ public class Fight {
         // Schedule second hero's attack
         long secondHeroDelay = Math.round(secondHero.currentAttackSpeed * 1000);
         long secondHeroCooldown = Math.round(secondHero.currentAttackRate * 1000);
+
         ScheduledFuture<?> secondHeroAttackFuture = executor.scheduleAtFixedRate(() -> {
             secondHero.attackEnemyHero(firstHero);
         }, secondHeroDelay, secondHeroCooldown, TimeUnit.MILLISECONDS);

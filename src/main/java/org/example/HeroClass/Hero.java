@@ -63,7 +63,7 @@ public class Hero {
     public int mainArmor;
     public double physicalDamageMultiplier;
 
-    public MainAttribute mainAttribute;
+    public PrimaryAttribute primaryAttribute;
 
     public int baseAgilityPoints;
     public double agilityGainPerLevel;
@@ -144,7 +144,17 @@ public class Hero {
         int damageReduced = (int) (damageDealtByEnemy * this.physicalDamageMultiplier);
 
         int damageAfterReductions = damageDealtByEnemy - damageReduced;
-        System.err.println(heroName +" with current hp "+currentHp +" got attacked by "+damageAfterReductions+ " and is now "+(currentHp-damageAfterReductions));
+
+        RANDOM_GENERATOR.nextBoolean();
+        if(this.naturalDamageBlockPercentage > 0){
+            double chance = RANDOM_GENERATOR.nextDouble();
+            // 50 -> 0.5
+            if(chance < (double) this.naturalDamageBlockPercentage / 100){
+                damageAfterReductions -= this.naturalDamageBlock;
+            }
+        }
+
+        System.err.println(heroName + " gets hit with "+damageAfterReductions + " ("+currentHp + "->"+(currentHp-damageAfterReductions+")"));
         this.currentHp -= damageAfterReductions;
 
         System.out.println("-----------");
@@ -211,7 +221,7 @@ public class Hero {
         int strWithItems = (int) (strengthGained + bonusItemStrength);
         int intellWithItems = (int) (intellGained + bonusItemIntelligence);
 
-        int bonusAttribute = switch (mainAttribute) {
+        int bonusAttribute = switch (primaryAttribute) {
             case AGILITY -> agiWithItems;
             case STRENGTH -> strWithItems;
             case INTELLIGENCE -> intellWithItems;

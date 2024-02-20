@@ -1,6 +1,6 @@
 package org.example.HeroClass;
 
-public enum MainAttribute {
+public enum PrimaryAttribute {
     STRENGTH ,
     AGILITY ,
     INTELLIGENCE ,
