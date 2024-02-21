@@ -211,10 +211,10 @@ public class HeroTests {
         DataFetcher.fillHeroStats(naga1,"Naga Siren");
         DataFetcher.fillHeroStats(naga2,"Naga Siren");
 
-        int[] res = Fight.fight(naga1,naga2,15);
+        int[] res = Fight.fight(naga1,naga2,2);
 
-        System.out.println("Naga 1 won "+res[0]);
-        System.out.println("Naga 2 won "+res[1]);
+        System.out.println("Naga 1 won "+res[0] + " times");
+        System.out.println("Naga 2 won "+res[1] + " times");
     }
 
 

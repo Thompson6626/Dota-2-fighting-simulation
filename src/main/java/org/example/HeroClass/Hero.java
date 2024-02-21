@@ -2,9 +2,10 @@ package org.example.HeroClass;
 
 import org.example.ItemClass.Item;
 
-import java.util.ArrayList;
+import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
+
 import static org.example.WebScrape.DataFetcher.EXTRA_DAMAGE_PER_ATTRIBUTE_FOR_UNIVERSAL;
 import static org.example.WebScrape.DataFetcher.EXTRA_ARMOR_PER_AGILITY;
 import static org.example.WebScrape.DataFetcher.EXTRA_MANA_PER_INTELLIGENCE_POINT;
@@ -98,24 +99,21 @@ public class Hero {
 
     private static final Random RANDOM_GENERATOR = new Random();
 
-    public void attackEnemyHero(Hero enemy){
-
+    public Map<String,String> attackEnemyHero(Hero enemy){
         // Finding the damage thats going to be dealt before reductions
         int randomDamage = RANDOM_GENERATOR.nextInt(( this.currentDamageHigh - this.currentDamageLow) + 1) + this.currentDamageLow;
 
         int damage = randomDamage + this.bonusItemDamage;
 
-        enemy.receiveDamage(damage);
-
-
+        return enemy.receiveDamage(damage, this);
     }
-    public void receiveDamage(int damageDealtByEnemy){
+    public Map<String,String> receiveDamage(int damageDealtByEnemy , Hero attacker){
 
         int damageReduced = (int) (damageDealtByEnemy * this.physicalDamageMultiplier);
 
         int damageAfterReductions = damageDealtByEnemy - damageReduced;
 
-        RANDOM_GENERATOR.nextBoolean();
+
         if(this.naturalDamageBlockPercentage > 0){
             double chance = RANDOM_GENERATOR.nextDouble();
             // 50 -> 0.5
@@ -124,10 +122,15 @@ public class Hero {
             }
         }
 
-        System.err.println(heroName + " gets hit with "+damageAfterReductions + " ("+currentHp + "->"+(currentHp-damageAfterReductions+")"));
+        Map<String,String> map = new HashMap<>();
+        map.put("Attacker",attacker.heroName);
+        map.put("Attacked",this.heroName);
+        map.put("DamageReceived", String.valueOf(damageAfterReductions));
+        map.put("Transition","(" + this.currentHp + " -> " + (this.currentHp-damageAfterReductions) + ")");
+
         this.currentHp -= damageAfterReductions;
 
-        System.out.println("-----------");
+        return map;
     }
 
     public void heroUpdateToMatchLevel(int level){

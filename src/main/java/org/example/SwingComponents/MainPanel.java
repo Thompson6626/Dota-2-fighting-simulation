@@ -258,31 +258,32 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
             }
         }
 
-
         //Any of the level comboboxes
         for (int j = 0; j < comboBoxes.length; j++) {
             if(e.getSource() == comboBoxes[j]){
-                int selectedLevel = (int) comboBoxes[j].getSelectedItem();
-
-                if(!heroes[j].heroName.equals("Choose a hero")){
-                    heroes[j].heroUpdateToMatchLevel(selectedLevel);
-                }
+                handleLevelSelection(j);
             }
         }
 
         if(e.getSource() == fightButton){
-            int times = Integer.parseInt(numberOfFights.getText().trim());
-
-            int[] res = Fight.fight(heroes[0],heroes[1],times);
-
-            heroWins[0].setText(String.valueOf(res[0]));
-            heroWins[1].setText(String.valueOf(res[1]));
+            handleFightButton();
         }
 
+    }
+    private void handleLevelSelection(int index) {
+        int selectedLevel = (int) comboBoxes[index].getSelectedItem();
 
+        if (!heroes[index].heroName.equals("Choose a hero")) {
+            heroes[index].heroUpdateToMatchLevel(selectedLevel);
+        }
+    }
+    private void handleFightButton(){
+        int times = Integer.parseInt(numberOfFights.getText().trim());
 
+        int[] res = Fight.fight(heroes[0],heroes[1],times);
 
-
+        heroWins[0].setText(String.valueOf(res[0]));
+        heroWins[1].setText(String.valueOf(res[1]));
     }
 
     private JFormattedTextField createPositiveIntegerField(int width) {
