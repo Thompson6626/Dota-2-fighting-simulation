@@ -15,20 +15,33 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DataFetcher {
+    public static final int MAXIMUM_HERO_LEVEL = getMaximumPossibleHeroLevel();
     private static final List<List<Number>> ATTRIBUTE_GAINS_CONSTANTS = getAttributeGainsConstants();
-    // Strength
+
+    /**
+     * <img  width = 25 src="https://static.wikia.nocookie.net/dota2_gamepedia/images/7/7a/Strength_attribute_symbol.png/revision/latest/scale-to-width-down/20?cb=20180323111829">ㅤStrength </img>
+     */
     public static final int EXTRA_HP_PER_STRENGTH_POINT = (int) ATTRIBUTE_GAINS_CONSTANTS.get(0).get(0);
     public static final double EXTRA_HP_REGEN_PER_STRENGTH_POINT = (double) ATTRIBUTE_GAINS_CONSTANTS.get(0).get(1);
-    // Agility
+
+    /**
+     * <img width = 25 src="https://static.wikia.nocookie.net/dota2_gamepedia/images/2/2d/Agility_attribute_symbol.png/revision/latest/scale-to-width-down/20?cb=20180323111717">ㅤAgility </img>
+     */
     public static final double EXTRA_ARMOR_PER_AGILITY = (double) ATTRIBUTE_GAINS_CONSTANTS.get(1).get(0);
     public static final int EXTRA_ATK_SPEED_PER_AGILITY_POINT = (int) ATTRIBUTE_GAINS_CONSTANTS.get(1).get(3);
-    // Intelligence
+
+    /**
+     * <img width= 25 src="https://static.wikia.nocookie.net/dota2_gamepedia/images/5/56/Intelligence_attribute_symbol.png/revision/latest/scale-to-width-down/20?cb=20180323111753">ㅤIntelligence </img>
+     */
     public static final int EXTRA_MANA_PER_INTELLIGENCE_POINT = (int) ATTRIBUTE_GAINS_CONSTANTS.get(2).get(0);
     public static final double EXTRA_MANA_REGEN_PER_INTELLIGENCE_POINT = (double) ATTRIBUTE_GAINS_CONSTANTS.get(2).get(1);
     public static final double EXTRA_MAGIC_RES_PER_INTELLIGENCE_POINT = (double) ATTRIBUTE_GAINS_CONSTANTS.get(2).get(2);
-    //Universal
+
+    /**
+     * <img  width = 25 src="https://static.wikia.nocookie.net/dota2_gamepedia/images/1/1c/Universal_attribute_symbol.png/revision/latest/scale-to-width-down/20?cb=20230501030320">ㅤUniversal </img>
+     */
     public static final double EXTRA_DAMAGE_PER_ATTRIBUTE_FOR_UNIVERSAL = (double) ATTRIBUTE_GAINS_CONSTANTS.get(3).get(0);
-    public static final int MAXIMUM_HERO_LEVEL = getMaximumPossibleHeroLevel();
+
 
     public static List<List<Number>> getAttributeGainsConstants() {
         String url ="https://dota2.fandom.com/wiki/Attributes";

@@ -40,7 +40,19 @@ public class CombatLogF {
         combatLogFrame.setTitle("Battle log");
         combatLogFrame.setResizable(false);
         combatLogPanel = new JPanel();
-        intializePanel();
+
+        random = new Random();
+        combatLogPanel.setLayout(new BoxLayout(combatLogPanel, BoxLayout.Y_AXIS));
+        // Add JScrollPane to enable scrolling
+        JScrollPane scrollPane = new JScrollPane(combatLogPanel);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+
+        combatLogPanel.setBackground(Color.DARK_GRAY);
+
+        timer = new Timer();
+
+        combatLogPanel.setVisible(true);
+
         combatLogFrame.add(combatLogPanel);
         combatLogFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         combatLogFrame.setBackground(Color.DARK_GRAY);
@@ -52,15 +64,7 @@ public class CombatLogF {
         return combatLogPanel;
     }
     private void intializePanel(){
-        random = new Random();
-        combatLogPanel.setLayout(new BoxLayout(combatLogPanel, BoxLayout.Y_AXIS));
-        // Add JScrollPane to enable scrolling
-        JScrollPane scrollPane = new JScrollPane(combatLogPanel);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-        combatLogPanel.setBackground(Color.DARK_GRAY);
-
-        timer = new Timer();
 
     }
 
