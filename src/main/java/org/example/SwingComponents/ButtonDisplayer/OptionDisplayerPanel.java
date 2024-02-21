@@ -100,7 +100,11 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
                     notifyHeroUpdated(hero);
                 }
                 if(itemListener != null || neutralListener != null){
-                    Item item = DataFetcher.updateAccordingToItem(hero,button.getText());
+                    Item item = DataFetcher.updateAccordingToItem(button.getText());
+
+                    hero.items.add(item);
+                    hero.updateStatsWithItems();
+
 
                     if(itemListener != null ){
                         notifyItemUpdated();

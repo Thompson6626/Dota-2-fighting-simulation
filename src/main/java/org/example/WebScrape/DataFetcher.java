@@ -9,8 +9,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -377,43 +376,105 @@ public class DataFetcher {
         return neutrals;
     }
 
+    private static final Set<String> SPECIFIC_KEYWORDS = Set.of(
+            "Base Attack Speed", "Evasion", "Spell Lifesteal (Hero)", "Status Resistance",
+            "Health Regen Amp", "Lifesteal Amp", "Mana Regen Amp", "Max HP Health Regen"
+    );
 
-    private static final String[] PASSIVE_KEYWORDS = {
-            "Strength",
-            "Agility",
-            "Intelligence",
-            "Attack Speed",
-            "Attack Damage",
-            "Health Regeneration",
-            "Mana Regeneration",
-            "Armor",
-            "Health",
-            "Mana",
-            "Evasion",
-            "Magic Resistance"
-    };
+    private static final Set<String> SPECIFIC_ITEMS_WITH_LEVELS = Set.of(
+            "Dagon", "Wraith Band", "Null Talisman", "Bracer", "Boots of Travel"
+    );
 
-    public static Item updateAccordingToItem(Hero hero,String itemName){
+    public static Item updateAccordingToItem(String itemName) {
         String url = "https://dota2.fandom.com/wiki/" + itemName;
-
-        Item item = new Item();
-        try{
-
+        Item item = new Item(itemName);
+        try {
             Document doc = Jsoup.connect(url).get();
+            String tableOfItemIdentifier = "table[style=\"width:300px; text-align:left; font-size:90%; border-collapse:collapse;\"]";
+            Element bonusRow = doc.select(tableOfItemIdentifier + " tbody tr:has(th:contains(Bonus))").first();
+            Element tdWithTheBonuses = bonusRow.select("td[style=\"border-top:1px solid black;\"]").get(1);
+            String[] sep = tdWithTheBonuses.text().split("\\+");
+
+            for (String str : sep) {
+                if (!str.isBlank()) {
+                    str = str.trim();
+                    int index = str.indexOf(" ");
+
+                    String dest = str.substring(index + 1);
+
+                    // If the levels contains a percentage number
+                    if(str.contains("%/")){
+                        filterForSpecialItems(item,str.substring(0,index),dest);
+                        continue;
+                    }
+
+                    String number = str.substring(0, str.contains("%") ? str.indexOf("%") : index);
 
 
-
-
-
-
-
-
-        }catch (IOException e){
+                    if (SPECIFIC_ITEMS_WITH_LEVELS.contains(itemName)) {
+                        filterForSpecialItems(item, number, dest);
+                    } else {
+                        setBonus(item, number, dest);
+                    }
+                }
+            }
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
         return item;
     }
+
+    private static void setBonus(Item item, String amount, String bonus) {
+        double amountDouble = Double.parseDouble(amount);
+        switch (bonus) {
+            case "Health Regeneration" -> item.setBonusHealthRegeneration(amountDouble);
+            case "Mana Regeneration" -> item.setBonusManaRegeneration(amountDouble);
+            case "Max HP Health Regen" -> item.setBonusMaxHpHealthRegen(amountDouble);
+            default -> {
+                int amountInt = Integer.parseInt(amount);
+                switch (bonus) {
+                    case "Strength" -> item.setBonusStrength(amountInt);
+                    case "Agility" -> item.setBonusAgility(amountInt);
+                    case "Intelligence" -> item.setBonusIntelligence(amountInt);
+                    case "Attack Speed" -> item.setBonusAttackSpeed(amountInt);
+                    case "Attack Damage" -> item.setBonusAttackDamage(amountInt);
+                    case "Armor" -> item.setBonusArmor(amountInt);
+                    case "Health" -> item.setBonusHealth(amountInt);
+                    case "Mana" -> item.setBonusMana(amountInt);
+                }
+            }
+        }
+    }
+
+    private static void filterForSpecialItems(Item item, String number, String dest) {
+        if (item.getBonusesOnLevel() == null) {
+            item.setBonusesOnLevel(new HashMap<>());
+        }
+
+        String[] spl = number.split("/");
+
+        item.setMaxLevel(spl.length);
+
+        List<Number> bonusPerLevels = new ArrayList<>();
+
+        for (String str : spl) {
+            if (item.getName().equals("Dagon") && dest.equals("Spell Lifesteal (Creep)")) {
+                continue;
+            }
+            int indexOfPercentage = str.indexOf("%");
+            if (indexOfPercentage > -1) {
+                str = str.substring(0, indexOfPercentage);
+            }
+
+            if(str.contains(".")) bonusPerLevels.add(Double.parseDouble(str));
+            else bonusPerLevels.add(Integer.parseInt(str));
+        }
+
+        if (!bonusPerLevels.isEmpty()) {
+            item.getBonusesOnLevel().put(dest, bonusPerLevels);
+        }
+    }
+
 
 
 }

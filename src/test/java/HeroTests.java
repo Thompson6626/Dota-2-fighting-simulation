@@ -3,8 +3,6 @@ import org.example.HeroClass.Hero;
 import org.example.WebScrape.DataFetcher;
 import org.junit.jupiter.api.*;
 
-import javax.xml.crypto.Data;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
