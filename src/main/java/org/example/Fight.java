@@ -36,8 +36,8 @@ public class Fight {
 
         // Schedule HP and mana regeneration task
         ScheduledFuture<?> hpAndManaFuture = executor.scheduleAtFixedRate(() -> {
-            firstHero.applyHpAndManaRegen();
-            secondHero.applyHpAndManaRegen();
+            firstHero.regenerateHpAndMana();
+            secondHero.regenerateHpAndMana();
         }, 0, 1000, TimeUnit.MILLISECONDS);
 
         // Schedule first hero's attack
@@ -94,8 +94,8 @@ public class Fight {
         // Shutdown the executor service
         executor.shutdown();
 
-        firstHero.toMaxAccordingToLevel();
-        secondHero.toMaxAccordingToLevel();
+        firstHero.maxHpAndManaAccordingToCurrentLevel();
+        secondHero.maxHpAndManaAccordingToCurrentLevel();
 
         return result;
 

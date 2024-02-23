@@ -380,7 +380,7 @@ public class DataFetcher {
             "Dagon", "Wraith Band", "Null Talisman", "Bracer", "Boots of Travel"
     );
 
-    public static Item updateAccordingToItem(String itemName) {
+    public static Item getItem(String itemName) {
         String url = "https://dota2.fandom.com/wiki/" + itemName;
         Item item = new Item(itemName);
         try {
@@ -421,9 +421,7 @@ public class DataFetcher {
     }
 
     private static void setBonus(Item item, String amount, String bonus) {
-
-        if(amount.contains(".")) item.mapValues.put(bonus,Double.parseDouble(amount));
-        else item.mapValues.put(bonus,Integer.parseInt(amount));
+        item.mapValues.put(bonus,Double.parseDouble(amount));
     }
 
     private static void filterForSpecialItems(Item item, String number, String dest) {

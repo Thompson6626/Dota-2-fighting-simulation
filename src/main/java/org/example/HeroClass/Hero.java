@@ -1,9 +1,7 @@
 package org.example.HeroClass;
 
 import org.example.ItemClass.Item;
-import org.mockito.internal.matchers.Null;
 
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
 
@@ -86,49 +84,54 @@ public class Hero {
     public int baseIntelligencePoints;
     public double intelligenceGainPerLevel;
 
+    public double agilityGainedFromLevel1toCurrent;
+    public double strenghtGainedFromLevel1toCurrent;
+    public double intelligenceGainedFromLevel1toCurrent;
+    public double agilityGainedFromLevel1toCurrentWithItems;
+    public double strenghtGainedFromLevel1toCurrentWithItems;
+    public double intelligenceGainedFromLevel1toCurrentWithItems;
     // Maximum number of items is 6
-    public Map<String,Number> itemValues;
+    public Map<String,Double> itemValues;
     public List<Item> items = new ArrayList<>(6);
-
-    private static final Random RANDOM_GENERATOR = new Random();
+    private final Random RANDOM_GENERATOR = new Random();
     public Hero() {
         itemValues = new HashMap<>();
-        itemValues.put("Intelligence",0);
-        itemValues.put("Strength",0);
-        itemValues.put("Agility",0);
-        itemValues.put("Health",0);
-        itemValues.put("Mana",0);
-        itemValues.put("Armor",0);
+        itemValues.put("Intelligence",0.0);
+        itemValues.put("Strength",0.0);
+        itemValues.put("Agility",0.0);
+        itemValues.put("Health",0.0);
+        itemValues.put("Mana",0.0);
+        itemValues.put("Armor",0.0);
         itemValues.put("Health Regeneration",0.0); // ! Decimal point
         itemValues.put("Mana Regeneration",0.0); // ! Decimal point
-        itemValues.put("Attack Damage",0);
-        itemValues.put("Attack Speed",0);
-        itemValues.put("Magic Resistance",0); //? Percentage
-        itemValues.put("Evasion",0); //? Percentage
-        itemValues.put("Spell Lifesteal (Hero)",0); //? Percentage
+        itemValues.put("Attack Damage",0.0);
+        itemValues.put("Attack Speed",0.0);
+        itemValues.put("Magic Resistance",0.0); //? Percentage
+        itemValues.put("Evasion",0.0); //? Percentage
+        itemValues.put("Spell Lifesteal (Hero)",0.0); //? Percentage
         itemValues.put("Max HP Health Regen",0.0); //??  Percentage // ! Decimal point
-        itemValues.put("Spell Lifesteal Amp",0); //? Percentage
-        itemValues.put("Mana Regen Amp",0); //? Percentage
-        itemValues.put("Spell Damage Amp",0); //? Percentage
-        itemValues.put("Base Attack Speed",0); //? Percentage
-        itemValues.put("Lifesteal Amp",0); //? Percentage
-        itemValues.put("Status Resistance",0); //? Percentage
-        itemValues.put("Health Regen Amp",0); //? Percentage
+        itemValues.put("Mana Regen Amp",0.0); //? Percentage
+        itemValues.put("Base Attack Speed",0.0); //? Percentage
+        itemValues.put("Health Regen Amp",0.0); //? Percentage
+        itemValues.put("Spell Damage Amp",0.0); //? Percentage
+        itemValues.put("Lifesteal Amp",0.0); //? Percentage
+        itemValues.put("Spell Lifesteal Amp",0.0); //? Percentage
+        itemValues.put("Status Resistance",0.0); //? Percentage
 
     }
 
 
     public Map<String,String> attackEnemyHero(Hero enemy){
         // Finding the damage thats going to be dealt before reductions
-        int randomDamage = RANDOM_GENERATOR.nextInt(( this.currentDamageHigh - this.currentDamageLow) + 1) + this.currentDamageLow;
+        int randomDamage = RANDOM_GENERATOR.nextInt((currentDamageHigh - currentDamageLow) + 1) + currentDamageLow;
 
-        int damage = randomDamage + (int) itemValues.get("bonusItemDamage"); // Because the bonus damage from items comes later
+        int damage = randomDamage + itemValues.get("Attack Damage").intValue(); // Because the bonus damage from items comes later
 
         return enemy.receiveDamage(damage, this);
     }
     public Map<String,String> receiveDamage(int damageDealtByEnemy , Hero attacker){
 
-        int damageReduced = (int) (damageDealtByEnemy * this.physicalDamageMultiplier);
+        int damageReduced = (int) (damageDealtByEnemy * physicalDamageMultiplier);
 
         int damageAfterReductions = damageDealtByEnemy - damageReduced;
 
@@ -136,20 +139,20 @@ public class Hero {
         if(this.naturalDamageBlockPercentage > 0){
             double chance = RANDOM_GENERATOR.nextDouble();
             // 50 -> 0.5
-            if(chance < (double) this.naturalDamageBlockPercentage / 100){
-                damageAfterReductions -= this.naturalDamageBlock;
+            if(chance < (double) naturalDamageBlockPercentage / 100){
+                damageAfterReductions -= naturalDamageBlock;
             }
         }
 
         Map<String,String> map = Map.of(
                 "Attacker",attacker.heroName,
-                "Attacked",this.heroName,
+                "Attacked",heroName,
                 "DamageReceived",String.valueOf(damageAfterReductions),
-                "Transition","(" + this.currentHp + " -> " + (this.currentHp-damageAfterReductions) + ")"
+                "Transition","(" + currentHp + " -> " + (currentHp-damageAfterReductions) + ")"
         );
 
 
-        this.currentHp -= damageAfterReductions;
+        currentHp -= damageAfterReductions;
 
         return map;
     }
@@ -157,6 +160,14 @@ public class Hero {
     public void heroUpdateToMatchLevel(int level){
         level -= 1;
         currentLevel = level;
+
+        calculateAgilityGainedFromLevel1toCurrent();
+        calculateStrengthGainedFromLevel1toCurrent();
+        calculateIntelligenceGainedFromLevel1toCurrent();
+
+        calculateAgilityGainedFromLevel1toCurrentWithItems();
+        calculateStrengthGainedFromLevel1toCurrentWithItems();
+        calculateIntelligenceGainedFromLevel1toCurrentWithItems();
 
         /*
         // Updating current attribute points
@@ -169,9 +180,9 @@ public class Hero {
 
         calculateIntelligenceBasedBonuses();
 
-        toMaxAccordingToLevel();
-
         calculateAgilityBasedBonuses();
+
+        maxHpAndManaAccordingToCurrentLevel();
 
         //Just the damage you would get with attributes because  there's still bonus damage from items left
         calculateCurrentPossibleDamage();
@@ -179,53 +190,42 @@ public class Hero {
     }
 
     private void calculateStrengthBasedBonuses(){
-        double strengthGained = roundToFixedDecimal(this.strengthGainPerLevel * this.currentLevel , 1);
         // Strength
-        maxHpOnCurrentAttributes = (int) (baseHp + ( (strengthGained + itemValues.get("Strength").intValue()) * EXTRA_HP_PER_STRENGTH_POINT) );
-        maxHpRegenOnCurrentAttributes = baseHpRegen + ( (strengthGained + itemValues.get("Strength").intValue())  * EXTRA_HP_REGEN_PER_STRENGTH_POINT);
+        maxHpOnCurrentAttributes = (int) (baseHp + (strenghtGainedFromLevel1toCurrentWithItems * EXTRA_HP_PER_STRENGTH_POINT) + itemValues.get("Health").intValue());
+        maxHpRegenOnCurrentAttributes = baseHpRegen + (strenghtGainedFromLevel1toCurrentWithItems * EXTRA_HP_REGEN_PER_STRENGTH_POINT) + itemValues.get("Health Regeneration");
     }
 
     private void calculateIntelligenceBasedBonuses(){
-        double intelligenceGained = roundToFixedDecimal(this.intelligenceGainPerLevel * this.currentLevel , 1);
-        maxManaOnCurrentAttributes = (int) (baseMana + ((intelligenceGained + itemValues.get("Intelligence").intValue()) * EXTRA_MANA_PER_INTELLIGENCE_POINT));
-        maxManaRegenOnCurrentAttributes = baseManaRegen + ((intelligenceGained +  itemValues.get("Intelligence").intValue()) * EXTRA_MANA_REGEN_PER_INTELLIGENCE_POINT);
-        currentMagicResOnCurrentAttrtibutes = baseMagicResistance + ((intelligenceGained +  itemValues.get("Intelligence").intValue()) * EXTRA_MAGIC_RES_PER_INTELLIGENCE_POINT);
+        maxManaOnCurrentAttributes = (int) (baseMana + (intelligenceGainedFromLevel1toCurrentWithItems * EXTRA_MANA_PER_INTELLIGENCE_POINT) + itemValues.get("Mana").intValue());
+        maxManaRegenOnCurrentAttributes = baseManaRegen + (intelligenceGainedFromLevel1toCurrentWithItems * EXTRA_MANA_REGEN_PER_INTELLIGENCE_POINT) + itemValues.get("Mana Regeneration");
+        currentMagicResOnCurrentAttrtibutes = baseMagicResistance + (intelligenceGainedFromLevel1toCurrentWithItems * EXTRA_MAGIC_RES_PER_INTELLIGENCE_POINT) + itemValues.get("Magic Resistance").intValue();
     }
     private void calculateAgilityBasedBonuses(){
-        double agilityGained = roundToFixedDecimal(this.agilityGainPerLevel * this.currentLevel , 1);
 
-        double atkSpeedSumFromAgility = (baseAgilityPoints + (agilityGained + itemValues.get("Agility").intValue()) * EXTRA_ATK_SPEED_PER_AGILITY_POINT) + (int) itemValues.get("Bonus Strength");
+        double atkSpeedSum = (baseAgilityPoints + (agilityGainedFromLevel1toCurrentWithItems) * EXTRA_ATK_SPEED_PER_AGILITY_POINT) + itemValues.get("Attack Speed").intValue();
 
         //Formula found here https://dota2.fandom.com/wiki/Attack_Speed
-        currentAttackSpeed = (baseAttackSpeed + (atkSpeedSumFromAgility)) / (100.0 * BAT) ;
+        currentAttackSpeed = (baseAttackSpeed + (atkSpeedSum)) / (100.0 * BAT) ;
 
         currentAttackSpeed = roundToFixedDecimal(currentAttackSpeed,3);
 
         //  https://dota2.fandom.com/wiki/Attack_Speed
         currentAttackRate = roundToFixedDecimal( 1 / currentAttackSpeed ,3);
 
-        currentArmor = baseArmor + (agilityGained * EXTRA_ARMOR_PER_AGILITY) + itemValues.get("Agility").intValue();
+        currentArmor = baseArmor + (agilityGainedFromLevel1toCurrentWithItems * EXTRA_ARMOR_PER_AGILITY) + itemValues.get("Armor").intValue();
         currentArmor = roundToFixedDecimal(currentArmor,2);
 
-        // https://dota2.fandom.com/wiki/Attack_Speed
-        physicalDamageMultiplier = (0.06 * currentArmor)/( 1 + 0.06 * Math.abs(currentArmor) );
+        physicalDamageMultiplier = (0.06 * currentArmor)/( 1 + 0.06 * Math.abs(currentArmor));
     }
 
     private void calculateCurrentPossibleDamage() {
-        // Rounding to just 1 decimal digit of accuracy
-        double agilityGained = roundToFixedDecimal(this.agilityGainPerLevel * this.currentLevel , 1);
-
-        double strengthGained = roundToFixedDecimal(this.strengthGainPerLevel * this.currentLevel , 1);
-
-        double intelligenceGained = roundToFixedDecimal(this.intelligenceGainPerLevel * this.currentLevel , 1);
-
 
         currentDamageLow = baseDamageLow;
         currentDamageHigh = baseDamageHigh;
 
-        int agiWithItems = (int) (agilityGained + itemValues.get("Strength").intValue());
-        int strWithItems = (int) (strengthGained + itemValues.get("Agility").intValue());
-        int intellWithItems = (int) (intelligenceGained + itemValues.get("Intelligence").intValue());
+        int agiWithItems = (int) agilityGainedFromLevel1toCurrentWithItems;
+        int strWithItems = (int) strenghtGainedFromLevel1toCurrentWithItems;
+        int intellWithItems = (int) intelligenceGainedFromLevel1toCurrentWithItems;
 
         int bonusAttribute = switch (primaryAttribute) {
             case AGILITY -> agiWithItems;
@@ -244,8 +244,7 @@ public class Hero {
     /**
      * Resetting hero's hp and mana to the maximum according to the current level
      */
-    public void toMaxAccordingToLevel(){
-
+    public void maxHpAndManaAccordingToCurrentLevel(){
         currentHp = maxHpOnCurrentAttributes;
         currentHpRegen = maxHpRegenOnCurrentAttributes;
 
@@ -256,34 +255,82 @@ public class Hero {
     /**
      *  Applying hp and mana regen to current hp and mana but not going past the maximum
      */
-    public void applyHpAndManaRegen() {
+    public void regenerateHpAndMana() {
         currentHp = Math.min((int)(currentHp + currentHpRegen), maxHpOnCurrentAttributes);
         currentMana = Math.min((int)(currentMana + currentManaRegen), maxManaOnCurrentAttributes);
     }
+    public double calculateAttributeGainWithoutItems(double gainPerLevel){
+        return roundToFixedDecimal(gainPerLevel * currentLevel, 1);
+    }
+    public double calculateAttributeGainWithItems(String attribute){
+
+        double attributesGained = switch (attribute){
+            case "Agility" -> calculateAttributeGainWithoutItems(agilityGainPerLevel);
+            case "Strength" -> calculateAttributeGainWithoutItems(strengthGainPerLevel);
+            case "Intelligence" -> calculateAttributeGainWithoutItems(intelligenceGainPerLevel);
+            default -> throw new IllegalStateException("No attribute with name: " + attribute);
+        };
+
+        Double itemBonus = itemValues.get(attribute);
+
+        return (itemBonus != null) ? attributesGained + itemBonus : attributesGained;
+    }
+
     private double roundToFixedDecimal(double num, int decimalPlaces){
         double digits = Math.pow(10 , decimalPlaces);
         return Math.round(num * digits) / digits;
     }
 
-
-    public void addAndUpdateItem(Item item) {
+    public void updateHerosItem(Item item , boolean add) {
         this.items.add(item);
 
         for(String key:item.getBonusesOnLevel().keySet()){
-            Number value = item.mapValues.get(key);
-            Number prev = this.itemValues.get(key);
+            if(itemValues.containsKey(key)){
+                double value = item.mapValues.get(key); // Previous value
+                double prev = itemValues.get(key); // Value being added
 
-            if (value instanceof Integer) {
-                this.itemValues.put(key, prev.intValue() + value.intValue());
-            } else if (value instanceof Double) {
-                this.itemValues.put(key, prev.doubleValue() + value.doubleValue());
+                itemValues.put(key, prev + value);
+
+                updateIfNecesary(key);
             }
-        }
 
+        }
 
     }
 
+    private void updateIfNecesary(String key) {
+        switch (key){
+            case "Agility" -> {
+                calculateAgilityGainedFromLevel1toCurrentWithItems();
+                calculateAgilityBasedBonuses();
+            }
+            case "Strength" -> {
+                calculateStrengthGainedFromLevel1toCurrentWithItems();
+                calculateStrengthBasedBonuses();
+            }
+            case "Intelligence" -> {
+                calculateIntelligenceGainedFromLevel1toCurrentWithItems();
+                calculateIntelligenceBasedBonuses();
+            }
 
-
-
+        }
+    }
+    public void calculateAgilityGainedFromLevel1toCurrent() {
+        agilityGainedFromLevel1toCurrent = calculateAttributeGainWithoutItems(agilityGainPerLevel);
+    }
+    public void calculateStrengthGainedFromLevel1toCurrent() {
+        strenghtGainedFromLevel1toCurrent = calculateAttributeGainWithoutItems(strengthGainPerLevel);
+    }
+    public void calculateIntelligenceGainedFromLevel1toCurrent() {
+        intelligenceGainedFromLevel1toCurrent = calculateAttributeGainWithoutItems(intelligenceGainPerLevel);
+    }
+    public void calculateAgilityGainedFromLevel1toCurrentWithItems() {
+        agilityGainedFromLevel1toCurrentWithItems = calculateAttributeGainWithItems("Agility");
+    }
+    public void calculateStrengthGainedFromLevel1toCurrentWithItems() {
+        strenghtGainedFromLevel1toCurrentWithItems = calculateAttributeGainWithItems("Strength");
+    }
+    public void calculateIntelligenceGainedFromLevel1toCurrentWithItems() {
+        intelligenceGainedFromLevel1toCurrentWithItems = calculateAttributeGainWithItems("Intelligence");
+    }
 }

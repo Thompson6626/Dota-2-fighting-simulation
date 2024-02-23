@@ -1,7 +1,7 @@
 package org.example.ItemClass.PassiveEffectsImpl;
 
 import org.example.HeroClass.Hero;
-import org.example.ItemClass.PassiveEffect;
+import org.example.ItemClass.PassiveEffects.PassiveEffect;
 
 public class ArmorReductionEffect implements PassiveEffect {
     private int armorReductionAmount;

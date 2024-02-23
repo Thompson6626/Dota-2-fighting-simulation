@@ -20,18 +20,18 @@ public class CombatLogF {
     //Panel parts
     private static final int TEXT_LIFESPAN = 18000; // Milliseconds
 
-    private Timer timer;
+    private final Timer timer;
 
     private static final Font LOGS_FONT = new Font("Cascadia Code",Font.PLAIN,15);
     private static final String[] COLORS = {
             "rgb(255, 139, 0)",
             "rgb(255, 255, 102)",
             "rgb(126, 158, 210)",
-            "rgb(52, 248, 255) ",
+            "rgb(52, 248, 255)",
             "rgb(0, 204, 255)"
     };
 
-    private Random random;
+    private final Random random;
     Map<Hero,String> heroColor = new IdentityHashMap<>();
 
     public CombatLogF(){
@@ -55,17 +55,12 @@ public class CombatLogF {
 
         combatLogFrame.add(combatLogPanel);
         combatLogFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        combatLogFrame.setBackground(Color.DARK_GRAY);
         combatLogFrame.pack();
         combatLogFrame.setVisible(true);
     }
 
     public JPanel getConsoleLogPanel() {
         return combatLogPanel;
-    }
-    private void intializePanel(){
-
-
     }
 
     public void addString(Map<String,String> logs, Hero attacker, Hero defendant){
