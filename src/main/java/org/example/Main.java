@@ -11,7 +11,12 @@ public class Main  {
 
     public static void main(String[] args) {
 
-        SwingUtilities.invokeLater(MenuFrame::new);
+        //SwingUtilities.invokeLater(MenuFrame::new);
 
+        List<String> items = DataFetcher.getAllItems();
+
+        for(String str:items){
+            DataFetcher.updateAccordingToItem(str);
+        }
     }
 }

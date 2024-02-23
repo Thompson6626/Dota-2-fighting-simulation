@@ -2,6 +2,7 @@ package org.example.ItemClass;
 
 import lombok.Data;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -11,40 +12,8 @@ public class Item {
 
     public String name;
 
-    public int bonusAgility;
-    public int bonusStrength;
-    public int bonusIntelligence;
 
-    public double bonusManaRegeneration;
-    public double bonusHealthRegeneration;
-
-    public int bonusArmor;
-
-    public int bonusHealth;
-    private int bonusMana;
-
-    public int bonusAttackDamage;
-    public int bonusAttackSpeed;
-
-    public int bonusEvasionPercentage;
-    public int bonusMagicResistancePercentage;
-
-    public int bonusLifeStealPercentage;
-
-    public int bonusBaseAttackSpeedPercentage;
-
-    public int healthRegenAmpPercentage;
-    public int lifestealAmpPercentage;
-
-    public int manaRegenAmpPercentage;
-
-    public double bonusMaxHpHealthRegen;
-
-    public int bonusManaPercentage;
-
-    public int bonusSpellLifestealPercentage;
-
-
+    public Map<String,Number> mapValues;
 
     // A map because some items dont have levels
     // The length of any list is the maximum level the specific item can get
@@ -55,6 +24,7 @@ public class Item {
 
     public Item(String name){
         this.name = name;
+        this.mapValues = new HashMap<>();
     }
 
 

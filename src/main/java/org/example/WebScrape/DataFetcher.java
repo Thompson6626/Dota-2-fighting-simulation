@@ -376,11 +376,6 @@ public class DataFetcher {
         return neutrals;
     }
 
-    private static final Set<String> SPECIFIC_KEYWORDS = Set.of(
-            "Base Attack Speed", "Evasion", "Spell Lifesteal (Hero)", "Status Resistance",
-            "Health Regen Amp", "Lifesteal Amp", "Mana Regen Amp", "Max HP Health Regen"
-    );
-
     private static final Set<String> SPECIFIC_ITEMS_WITH_LEVELS = Set.of(
             "Dagon", "Wraith Band", "Null Talisman", "Bracer", "Boots of Travel"
     );
@@ -407,9 +402,9 @@ public class DataFetcher {
                         filterForSpecialItems(item,str.substring(0,index),dest);
                         continue;
                     }
+                    int percentageIndex = str.indexOf("%");
 
-                    String number = str.substring(0, str.contains("%") ? str.indexOf("%") : index);
-
+                    String number = str.substring(0, percentageIndex > -1 ? percentageIndex : index);
 
                     if (SPECIFIC_ITEMS_WITH_LEVELS.contains(itemName)) {
                         filterForSpecialItems(item, number, dest);
@@ -421,29 +416,14 @@ public class DataFetcher {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        System.out.println(itemName + " -> "+item.mapValues);
         return item;
     }
 
     private static void setBonus(Item item, String amount, String bonus) {
-        double amountDouble = Double.parseDouble(amount);
-        switch (bonus) {
-            case "Health Regeneration" -> item.setBonusHealthRegeneration(amountDouble);
-            case "Mana Regeneration" -> item.setBonusManaRegeneration(amountDouble);
-            case "Max HP Health Regen" -> item.setBonusMaxHpHealthRegen(amountDouble);
-            default -> {
-                int amountInt = Integer.parseInt(amount);
-                switch (bonus) {
-                    case "Strength" -> item.setBonusStrength(amountInt);
-                    case "Agility" -> item.setBonusAgility(amountInt);
-                    case "Intelligence" -> item.setBonusIntelligence(amountInt);
-                    case "Attack Speed" -> item.setBonusAttackSpeed(amountInt);
-                    case "Attack Damage" -> item.setBonusAttackDamage(amountInt);
-                    case "Armor" -> item.setBonusArmor(amountInt);
-                    case "Health" -> item.setBonusHealth(amountInt);
-                    case "Mana" -> item.setBonusMana(amountInt);
-                }
-            }
-        }
+
+        if(amount.contains(".")) item.mapValues.put(bonus,Double.parseDouble(amount));
+        else item.mapValues.put(bonus,Integer.parseInt(amount));
     }
 
     private static void filterForSpecialItems(Item item, String number, String dest) {
