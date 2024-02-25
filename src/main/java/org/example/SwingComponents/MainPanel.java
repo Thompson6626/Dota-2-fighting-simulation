@@ -237,7 +237,8 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
                             this,
                             heroes[i],
                             ITEM_NAMES,
-                            itemsButtons[i][j]
+                            itemsButtons[i][j],
+                            j
                             );
                     lastButtonClicked = itemsButtons[i][j];
                     break;

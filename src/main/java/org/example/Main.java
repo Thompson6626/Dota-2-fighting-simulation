@@ -1,6 +1,9 @@
 package org.example;
 
 import org.example.WebScrape.DataFetcher;
+
+import org.example.SwingComponents.MenuFrame;
+import javax.swing.*;
 import java.util.List;
 
 public class Main  {
@@ -9,10 +12,6 @@ public class Main  {
 
         //SwingUtilities.invokeLater(MenuFrame::new);
 
-        List<String> items = DataFetcher.getAllItems();
 
-        for(String str:items){
-            DataFetcher.getItem(str);
-        }
     }
 }

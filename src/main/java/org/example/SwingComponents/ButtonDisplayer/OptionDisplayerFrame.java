@@ -3,6 +3,7 @@ package org.example.SwingComponents.ButtonDisplayer;
 import org.example.HeroClass.Hero;
 import org.example.SwingComponents.HeroUpdateListener;
 import org.example.SwingComponents.ItemUpdateListener;
+import org.example.SwingComponents.NeutralUpdateListener;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,11 +26,22 @@ public class OptionDisplayerFrame extends JFrame {
             ItemUpdateListener listener,
             Hero hero,
             List<String> itemNames,
+            JButton buttonClicked ,
+            int inventorySlot
+    ) {
+        chooserPanel = new OptionDisplayerPanel(listener,hero,itemNames,buttonClicked,inventorySlot);
+        this.add(chooserPanel);
+        initializeGUI("an item");
+    }
+    public OptionDisplayerFrame(
+            NeutralUpdateListener listener,
+            Hero hero,
+            List<String> itemNames,
             JButton buttonClicked
     ) {
         chooserPanel = new OptionDisplayerPanel(listener,hero,itemNames,buttonClicked);
         this.add(chooserPanel);
-        initializeGUI("an item");
+        initializeGUI("a neutral item");
     }
 
     private void initializeGUI(String text){

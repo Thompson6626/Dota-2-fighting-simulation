@@ -19,13 +19,15 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
     private HeroUpdateListener heroListener = null;
     private ItemUpdateListener itemListener = null;
     private NeutralUpdateListener neutralListener = null;
-    private JButton buttonClicked = null;
+
     private final List<String> options;
     private static final Font NAME_FONT = new Font("Optimus Princeps", Font.PLAIN, 20);
     private static final int COLUMNS = 10;
     private static final int ROWS = 10;
     private final List<JButton> buttons = new ArrayList<>();
-    Hero hero;
+    private final Hero hero;
+    private JButton buttonClicked;
+    private int inventorySlot;
 
     // Display for heroes
     public OptionDisplayerPanel(
@@ -43,12 +45,14 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
             ItemUpdateListener itemListener,
             Hero hero,
             List<String> itemNames,
-            JButton buttonClicked
+            JButton buttonClicked ,
+            int itemSlot
     ){
         this.itemListener = itemListener;
         this.hero = hero;
         this.options = itemNames;
         this.buttonClicked = buttonClicked;
+        this.inventorySlot = itemSlot;
         initializeGUI();
     }
 
@@ -84,6 +88,14 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
             buttonPanel.add(button);
             buttons.add(button);
         }
+        if(itemListener != null || neutralListener != null){
+            JButton deleteButton = new JButton("X");
+            deleteButton.setForeground(Color.RED);
+            deleteButton.setFocusable(false);
+            deleteButton.setFont(new Font(NAME_FONT.getFontName(),Font.BOLD,30));
+            buttonPanel.add(deleteButton);
+            buttons.add(deleteButton);
+        }
 
         this.add(scrollPane, BorderLayout.CENTER);
     }
@@ -100,16 +112,20 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
                     notifyHeroUpdated(hero);
                 }
                 if(itemListener != null || neutralListener != null){
-                    Item item = DataFetcher.getItem(button.getText());
 
-                    hero.updateHerosItem(item,true);
+                    if(!buttonClicked.getText().equals("X")){
+                        Item item = DataFetcher.getItem(button.getText());
 
-                    if(itemListener != null ){
-                        notifyItemUpdated();
-                    }else if(neutralListener != null){
-                        notifyNeutralUpdated();
+                        hero.updateHerosItem(item,true,inventorySlot);
+
+                    }else{
+                        buttonClicked.setText("");
+
+                        hero.updateHerosItem(hero.items.get(inventorySlot),false,inventorySlot);
                     }
 
+                    if(itemListener != null ) notifyItemUpdated();
+                    else if(neutralListener != null) notifyNeutralUpdated();
                 }
 
                 // Dispose the window

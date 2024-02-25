@@ -38,7 +38,7 @@ public class Fight {
         ScheduledFuture<?> hpAndManaFuture = executor.scheduleAtFixedRate(() -> {
             firstHero.regenerateHpAndMana();
             secondHero.regenerateHpAndMana();
-        }, 0, 1000, TimeUnit.MILLISECONDS);
+        }, 0, 100, TimeUnit.MILLISECONDS);
 
         // Schedule first hero's attack
         long firstHeroDelay = Math.round(firstHero.currentAttackSpeed * 1000);

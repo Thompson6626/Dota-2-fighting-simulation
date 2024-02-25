@@ -425,18 +425,18 @@ public class DataFetcher {
     }
 
     private static void filterForSpecialItems(Item item, String number, String dest) {
-        if (item.getBonusesOnLevel() == null) {
-            item.setBonusesOnLevel(new HashMap<>());
+        if (item.bonusesOnLevel == null) {
+            item.bonusesOnLevel = new HashMap<>();
         }
 
         String[] spl = number.split("/");
 
-        item.setMaxLevel(spl.length);
+        item.maxLevel = spl.length;
 
         List<Number> bonusPerLevels = new ArrayList<>();
 
         for (String str : spl) {
-            if (item.getName().equals("Dagon") && dest.equals("Spell Lifesteal (Creep)")) {
+            if (item.name.equals("Dagon") && dest.equals("Spell Lifesteal (Creep)")) {
                 continue;
             }
             int indexOfPercentage = str.indexOf("%");
@@ -449,7 +449,7 @@ public class DataFetcher {
         }
 
         if (!bonusPerLevels.isEmpty()) {
-            item.getBonusesOnLevel().put(dest, bonusPerLevels);
+            item.bonusesOnLevel.put(dest, bonusPerLevels);
         }
     }
 

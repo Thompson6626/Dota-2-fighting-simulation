@@ -59,10 +59,6 @@ public class CombatLogF {
         combatLogFrame.setVisible(true);
     }
 
-    public JPanel getConsoleLogPanel() {
-        return combatLogPanel;
-    }
-
     public void addString(Map<String,String> logs, Hero attacker, Hero defendant){
 
         if(heroColor.isEmpty()){
