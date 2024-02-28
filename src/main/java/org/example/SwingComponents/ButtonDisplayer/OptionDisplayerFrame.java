@@ -49,7 +49,7 @@ public class OptionDisplayerFrame extends JFrame {
         this.setTitle("Choose " + text);
         this.pack();
         this.setVisible(true);
-        this.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setLocationRelativeTo(null);
     }
 }

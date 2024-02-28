@@ -4,12 +4,36 @@ package org.example;
 import org.example.HeroClass.Hero;
 import org.example.SwingComponents.CombatLog.CombatLogF;
 
+import javax.swing.*;
 import java.util.Map;
 import java.util.concurrent.*;
 
 public class Fight {
 
     private static CombatLogF combatLogF;
+    public interface FightResultCallback {
+        void onFightCompleted(int[] result);
+    }
+
+    public static void fightAsync(Hero firstHero, Hero secHero, int times, FightResultCallback callback) {
+        SwingWorker<int[], Void> worker = new SwingWorker<>() {
+            @Override
+            protected int[] doInBackground() {
+                return fight(firstHero, secHero, times);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    int[] result = get();
+                    callback.onFightCompleted(result);
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        worker.execute();
+    }
     public static int[] fight(Hero firstHero,Hero secHero,int times){
 
         int leftWon = 0;
@@ -33,12 +57,11 @@ public class Fight {
 
         if(combatLogF == null) combatLogF = new CombatLogF();
 
-
         // Schedule HP and mana regeneration task
         ScheduledFuture<?> hpAndManaFuture = executor.scheduleAtFixedRate(() -> {
             firstHero.regenerateHpAndMana();
             secondHero.regenerateHpAndMana();
-        }, 0, 100, TimeUnit.MILLISECONDS);
+        }, 100, 100, TimeUnit.MILLISECONDS);
 
         // Schedule first hero's attack
         long firstHeroDelay = Math.round(firstHero.currentAttackSpeed * 1000);
@@ -62,7 +85,7 @@ public class Fight {
 
         // Check for fight completion
         executor.submit(() -> {
-            while (firstHero.currentHp > 0 && secondHero.currentHp > 0) {
+            while (firstHero.currentHp >= 0 && secondHero.currentHp >= 0) {
                 try {
                     Thread.sleep(10);
                 } catch (InterruptedException e) {
@@ -101,12 +124,11 @@ public class Fight {
 
     }
 
+    public static CombatLogF getCombatLogF() {
+        return combatLogF;
+    }
 
-
-
-
-
-
-
-
+    public static void setCombatLogF(CombatLogF combatLogF) {
+        Fight.combatLogF = combatLogF;
+    }
 }

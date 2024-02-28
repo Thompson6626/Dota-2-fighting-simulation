@@ -2,6 +2,7 @@ package org.example.SwingComponents;
 
 import org.example.Fight;
 import org.example.HeroClass.Hero;
+import org.example.ItemClass.Item;
 import org.example.SwingComponents.ButtonDisplayer.OptionDisplayerFrame;
 import org.example.SwingComponents.Buttons.RoundButton;
 import org.example.WebScrape.DataFetcher;
@@ -50,6 +51,8 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
     private final int itemsButtonHeight = 60;
 
     JLabel timesLabel;
+    JLabel[] warningLabels = new JLabel[2];
+    JLabel fightWarningLabel = new JLabel("Select 2 heroes first");
 
     JLabel[] heroWins = new JLabel[2];
 
@@ -165,6 +168,7 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
 
                 // Create and configure the button
                 JButton button = new JButton();
+                button.setForeground(Color.white);
                 button.setFocusable(false);
                 button.setBounds(x, y, itemsButtonWidth, itemsButtonHeight);
                 button.addActionListener(this);
@@ -176,13 +180,31 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
             }
         }
 
+        for (int i = 0; i < warningLabels.length; i++) {
+            JLabel label = new JLabel("Select a hero first");
+            label.setVisible(false);
+            label.setForeground(Color.red);
+            label.setFont(new Font("Verdana",Font.BOLD,20));
+            label.setBounds(
+                    heroChooseButtons[i].getX() + 50,
+                    heroChooseButtons[i].getY() - 80,
+                    200,
+                    100
+            );
+            warningLabels[i] = label;
+            this.add(label);
+        }
+
         for (int in = 0; in < neutralButtons.length; in++) {
             JButton button = new RoundButton("");
+            button.setForeground(Color.white);
             button.setFocusable(false);
             button.addActionListener(this);
             this.add(button);
             neutralButtons[in]=button;
         }
+
+
 
 
 
@@ -200,6 +222,12 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
                 50
         );
 
+        fightWarningLabel.setForeground(Color.red);
+        fightWarningLabel.setBounds(fightButton.getX() - 50, fightButton.getY() + 30,300,100 );
+        fightWarningLabel.setFont(new Font("Verdana",Font.BOLD,20));
+        fightWarningLabel.setVisible(false);
+        this.add(fightWarningLabel);
+
         for (int i = 0; i < heroWins.length ; i++) {
             JLabel label = new JLabel("0");
             label.setFont(new Font("Cascadia Code",Font.PLAIN,50));
@@ -216,9 +244,10 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
     @Override
     public void actionPerformed(ActionEvent e) {
 
+        Object source = e.getSource();
         // Any of the hero buttons
         for (int i = 0; i < heroChooseButtons.length; i++) {
-            if(e.getSource() == heroChooseButtons[i]){
+            if(source == heroChooseButtons[i]){
                 new OptionDisplayerFrame(
                         this,
                         heroes[i],
@@ -232,44 +261,67 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
         // Any of the item buttons
         for(int i = 0 ; i < itemsButtons.length; i++){
             for(int j = 0 ; j < itemsButtons[i].length ; j++){
-                if(e.getSource() == itemsButtons[i][j]){
-                    new OptionDisplayerFrame(
-                            this,
-                            heroes[i],
-                            ITEM_NAMES,
-                            itemsButtons[i][j],
-                            j
-                            );
-                    lastButtonClicked = itemsButtons[i][j];
+                if(source == itemsButtons[i][j]){
+                    if(heroChooseButtons[i].getText().equals("Choose a hero")){
+                        showWarningLabel(warningLabels[i]);
+                    }else{
+                        new OptionDisplayerFrame(
+                                this,
+                                heroes[i],
+                                ITEM_NAMES,
+                                itemsButtons[i][j],
+                                j + 1
+                        );
+                        lastButtonClicked = itemsButtons[i][j];
+                    }
                     break;
                 }
             }
         }
 
         for(int i = 0; i < neutralButtons.length; i++){
-            if(e.getSource()== neutralButtons[i]){
-                new OptionDisplayerFrame(
-                        this,
-                        heroes[i],
-                        NEUTRAL_ITEM_NAMES,
-                        neutralButtons[i]
-                );
-                lastButtonClicked = neutralButtons[i];
+            if(source == neutralButtons[i]){
+                if(heroChooseButtons[i].getText().equals("Choose a hero")){
+                    showWarningLabel(warningLabels[i]);
+                }else{
+                    new OptionDisplayerFrame(
+                            this,
+                            heroes[i],
+                            NEUTRAL_ITEM_NAMES,
+                            neutralButtons[i]
+                    );
+                    lastButtonClicked = neutralButtons[i];
+                }
                 break;
             }
         }
 
         //Any of the level comboboxes
         for (int j = 0; j < comboBoxes.length; j++) {
-            if(e.getSource() == comboBoxes[j]){
+            if(source  == comboBoxes[j]){
                 handleLevelSelection(j);
             }
         }
 
-        if(e.getSource() == fightButton){
-            handleFightButton();
+        if(source == fightButton){
+            if(!heroChooseButtons[0].getText().equals("Choose a hero")
+                    && !heroChooseButtons[1].getText().equals("Choose a hero")
+            ){
+                handleFightButton();
+            }else{
+                showWarningLabel(fightWarningLabel);
+            }
+
         }
 
+    }
+    private void showWarningLabel(JLabel label) {
+        label.setVisible(true);
+
+        // Use a Timer to hide the label after 3 seconds
+        Timer timer = new Timer(2000, e -> label.setVisible(false));
+        timer.setRepeats(false);
+        timer.start();
     }
     private void handleLevelSelection(int index) {
         int selectedLevel = (int) comboBoxes[index].getSelectedItem();
@@ -281,10 +333,14 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
     private void handleFightButton(){
         int times = Integer.parseInt(numberOfFights.getText().trim());
 
-        int[] res = Fight.fight(heroes[0],heroes[1],times);
+        Fight.fightAsync(heroes[0], heroes[1], times, result -> SwingUtilities.invokeLater(() -> {
+            heroWins[0].setText(String.valueOf(result[0]));
+            heroWins[1].setText(String.valueOf(result[1]));
+            Fight.getCombatLogF().closeFrameAndPanel();
+            Fight.setCombatLogF(null);
+        }));
 
-        heroWins[0].setText(String.valueOf(res[0]));
-        heroWins[1].setText(String.valueOf(res[1]));
+
     }
 
     private JFormattedTextField createPositiveIntegerField(int width) {
@@ -319,12 +375,12 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
 
     }
     @Override
-    public void onItemUpdate() {
-
+    public void onItemUpdate(Item item) {
+        lastButtonClicked.setText(item.name);
     }
 
     @Override
-    public void onNeutralUpdate() {
-
+    public void onNeutralUpdate(Item item) {
+        lastButtonClicked.setText(item.name);
     }
 }

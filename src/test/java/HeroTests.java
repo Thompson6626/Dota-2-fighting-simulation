@@ -164,6 +164,11 @@ public class HeroTests {
         DataFetcher.fillHeroStats(puck,"Puck");
         marci.heroUpdateToMatchLevel(15);
 
+        Item divine1 = DataFetcher.getItem("Divine Rapier");
+        Item divine2 = DataFetcher.getItem("Divine Rapier");
+        marci.updateHerosItem(divine1,true,1);
+        marci.updateHerosItem(divine2,true,2);
+
         int[] res = Fight.fight(marci,puck,15);
         int[] res2 = Fight.fight(puck,marci,15);
 
@@ -228,5 +233,45 @@ public class HeroTests {
         tb.updateHerosItem(item2,true,4);
 
         assertEquals(22,Math.round(tb.currentArmor));
+    }
+
+    @Test
+    public void testMultipleMoonShardsGiveCorrectAttackSpeed(){
+
+        Item item = DataFetcher.getItem("Moon Shard");
+        Item item2 = DataFetcher.getItem("Moon Shard");
+        Item item3 = DataFetcher.getItem("Moon Shard");
+        Item item4 = DataFetcher.getItem("Moon Shard");
+        Item item5 = DataFetcher.getItem("Moon Shard");
+        Item item6 = DataFetcher.getItem("Moon Shard");
+
+        System.out.println(marci.currentAttackSpeed);
+        marci.updateHerosItem(item,true,1);
+        marci.updateHerosItem(item2,true,2);
+        marci.updateHerosItem(item3,true,3);
+        marci.updateHerosItem(item4,true,4);
+        marci.updateHerosItem(item5,true,5);
+        marci.updateHerosItem(item6,true,6);
+
+        System.out.println(marci.currentAttackSpeed);
+        System.out.println(marci.currentAttackRate);
+
+    }
+
+    @Test
+    public void testButterfliesOnLevel16Templar(){
+
+        Hero ta = new Hero();
+        DataFetcher.fillHeroStats(ta,"Templar Assassin");
+        ta.heroUpdateToMatchLevel(16);
+
+        Item item = DataFetcher.getItem("Butterfly");
+        Item item2 = DataFetcher.getItem("Butterfly");
+
+        ta.updateHerosItem(item,true,1);
+        ta.updateHerosItem(item2,true,2);
+
+        assertEquals(337 , ta.hudAttackSpeed);
+        System.out.println(ta.currentAttackRate);
     }
 }

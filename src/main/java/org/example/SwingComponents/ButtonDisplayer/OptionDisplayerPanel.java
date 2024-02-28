@@ -80,6 +80,9 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
         scrollPane.getHorizontalScrollBar().setUnitIncrement(50);
         scrollPane.getHorizontalScrollBar().setBlockIncrement(40);
 
+
+
+
         for (String name : options) {
             JButton button = new JButton(name);
             button.setFocusable(false);
@@ -91,11 +94,13 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
         if(itemListener != null || neutralListener != null){
             JButton deleteButton = new JButton("X");
             deleteButton.setForeground(Color.RED);
-            deleteButton.setFocusable(false);
             deleteButton.setFont(new Font(NAME_FONT.getFontName(),Font.BOLD,30));
+            deleteButton.setFocusable(false);
+            deleteButton.addActionListener(this);
             buttonPanel.add(deleteButton);
             buttons.add(deleteButton);
         }
+
 
         this.add(scrollPane, BorderLayout.CENTER);
     }
@@ -103,29 +108,30 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
 
+        Object source = e.getSource();
+
         // If the hero buttons was clicked
         for (JButton button : buttons) {
-            if(e.getSource() == button){
-
+            if(source == button){
                 if(heroListener != null){
                     DataFetcher.fillHeroStats(hero,button.getText());
                     notifyHeroUpdated(hero);
                 }
                 if(itemListener != null || neutralListener != null){
 
-                    if(!buttonClicked.getText().equals("X")){
-                        Item item = DataFetcher.getItem(button.getText());
+                    boolean deletes = button.getText().equals("X");
+
+                    Item item = new Item("");
+                    if(!deletes){
+                        item = DataFetcher.getItem(button.getText());
 
                         hero.updateHerosItem(item,true,inventorySlot);
-
                     }else{
-                        buttonClicked.setText("");
-
                         hero.updateHerosItem(hero.items.get(inventorySlot),false,inventorySlot);
                     }
 
-                    if(itemListener != null ) notifyItemUpdated();
-                    else if(neutralListener != null) notifyNeutralUpdated();
+                    if(itemListener != null ) notifyItemUpdated(item);
+                    else if(neutralListener != null) notifyNeutralUpdated(item);
                 }
 
                 // Dispose the window
@@ -139,10 +145,10 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
     private void notifyHeroUpdated(Hero hero) {
         heroListener.onHeroUpdated(hero);
     }
-    private void notifyItemUpdated(){
-        itemListener.onItemUpdate();
+    private void notifyItemUpdated(Item item){
+        itemListener.onItemUpdate(item);
     }
-    private void notifyNeutralUpdated(){
-        neutralListener.onNeutralUpdate();
+    private void notifyNeutralUpdated(Item item){
+        neutralListener.onNeutralUpdate(item);
     }
 }

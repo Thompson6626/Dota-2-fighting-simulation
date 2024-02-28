@@ -4,8 +4,10 @@ import org.example.HeroClass.Hero;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
 import java.util.*;
 import java.util.Timer;
+import java.awt.event.WindowEvent;
 
 public class CombatLogF {
 
@@ -15,14 +17,14 @@ public class CombatLogF {
 
     private static final int SCREEN_WIDTH = 600;
     private static final int SCREEN_HEIGHT = 250;
-    private static final Dimension SCREEN_SIZE = new Dimension(SCREEN_WIDTH,SCREEN_HEIGHT);
+    private static final Dimension SCREEN_SIZE = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    //Panel parts
+    // Panel parts
     private static final int TEXT_LIFESPAN = 18000; // Milliseconds
 
     private final Timer timer;
 
-    private static final Font LOGS_FONT = new Font("Cascadia Code",Font.PLAIN,15);
+    private static final Font LOGS_FONT = new Font("Cascadia Code", Font.PLAIN, 15);
     private static final String[] COLORS = {
             "rgb(255, 139, 0)",
             "rgb(255, 255, 102)",
@@ -32,29 +34,41 @@ public class CombatLogF {
     };
 
     private final Random random;
-    Map<Hero,String> heroColor = new IdentityHashMap<>();
+    private Map<Hero, String> heroColor;
 
-    public CombatLogF(){
+    public CombatLogF() {
+        heroColor = new IdentityHashMap<>();
+        random = new Random();
         combatLogFrame = new JFrame("Combat Log");
         combatLogFrame.setPreferredSize(SCREEN_SIZE);
         combatLogFrame.setTitle("Battle log");
         combatLogFrame.setResizable(false);
+
         combatLogPanel = new JPanel();
-
-        random = new Random();
         combatLogPanel.setLayout(new BoxLayout(combatLogPanel, BoxLayout.Y_AXIS));
-        // Add JScrollPane to enable scrolling
-        JScrollPane scrollPane = new JScrollPane(combatLogPanel);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-        combatLogPanel.setBackground(Color.DARK_GRAY);
+        combatLogPanel.setBackground(new Color(40, 42, 44));
 
         timer = new Timer();
 
+        // Wrap the combatLogPanel with the JScrollPane before adding it to the frame
+        JScrollPane scrollPane = new JScrollPane(combatLogPanel);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(50);
+        scrollPane.getVerticalScrollBar().setBlockIncrement(40);
+        combatLogFrame.add(scrollPane);
+
         combatLogPanel.setVisible(true);
 
-        combatLogFrame.add(combatLogPanel);
-        combatLogFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        combatLogFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        combatLogFrame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                combatLogFrame.dispose();
+                combatLogFrame = null;
+            }
+        });
+
         combatLogFrame.pack();
         combatLogFrame.setVisible(true);
     }
@@ -77,9 +91,15 @@ public class CombatLogF {
         String damageReceivedLog = logs.get("DamageReceived");
         String transitionLog = logs.get("Transition");
 
+
         String log = """
              <html>
-                <font color='%s'>%s</font> hits <font color='%s'>%s</font> for <font color='rgb(250, 4, 10)'>%s</font> <font color='rgb(30, 255, 0)'>%s</font>
+                <font color='%s'>%s</font>\s
+                hits\s
+                <font color='%s'>%s</font>\s
+                for\s
+                <font color='rgb(250, 4, 10)'>%s</font>\s
+                <font color='rgb(30, 255, 0)'>%s</font>
              </html>
              """.formatted(heroColor.get(attacker), attackerLog,
                 heroColor.get(defendant), defendantLog,
@@ -102,5 +122,9 @@ public class CombatLogF {
                 combatLogPanel.repaint(); // Repaint the panel to reflect changes
             }
         }, TEXT_LIFESPAN);
+    }
+    public void closeFrameAndPanel() {
+        // Close the frame and panel
+        combatLogFrame.dispose();
     }
 }

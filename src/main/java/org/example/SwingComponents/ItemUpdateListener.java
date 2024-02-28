@@ -1,5 +1,7 @@
 package org.example.SwingComponents;
 
+import org.example.ItemClass.Item;
+
 public interface ItemUpdateListener {
-    void onItemUpdate();
+    void onItemUpdate(Item item);
 }

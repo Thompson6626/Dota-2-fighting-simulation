@@ -416,7 +416,7 @@ public class DataFetcher {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(itemName + " -> "+item.mapValues);
+        //System.out.println(itemName + " -> "+item.mapValues);
         return item;
     }
 

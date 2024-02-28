@@ -1,6 +1,5 @@
 package org.example.HeroClass;
 
-import net.bytebuddy.dynamic.loading.ClassInjector;
 import org.example.ItemClass.Item;
 
 import java.util.*;
@@ -59,7 +58,7 @@ public class Hero {
     public double currentHp;
     public double maxHpOnCurrentAttributes;
     public double currentHpRegen;
-    public double maxHpRegenOnCurrentAttributes;
+    public double hpRegenOnCurrentAttributes;
     public double currentMana;
     public double maxManaOnCurrentAttributes;
     public double currentManaRegen;
@@ -94,7 +93,7 @@ public class Hero {
     public double evasionChance = 0.0;
     public Map<String,Object> itemValues;
     // Maximum number of items is 6
-
+    public int hudAttackSpeed;
     public Map<Integer, Item> items = new HashMap<>();
 
     private final Random RANDOM_GENERATOR = new Random();
@@ -116,11 +115,11 @@ public class Hero {
         itemValues.put("Spell Lifesteal (Hero)",0.0); //? Percentage
         itemValues.put("Mana Regen Amp",0.0); //? Percentage
         itemValues.put("Base Attack Speed",0.0); //? Percentage
-        itemValues.put("Health Regen Amp",0.0); //? Percentage
+        itemValues.put("Health Regen Amp",new ArrayList<Double>()); //? Percentage // Sange based
         itemValues.put("Spell Damage Amp",0.0); //? Percentage
-        itemValues.put("Lifesteal Amp",0.0); //? Percentage
+        itemValues.put("Lifesteal Amp",new ArrayList<Double>()); //? Percentage  // Sange based
         itemValues.put("Spell Lifesteal Amp",0.0); //? Percentage
-        itemValues.put("Status Resistance",0.0); //? Percentage
+        itemValues.put("Status Resistance",new ArrayList<Double>()); //? Percentage  // Sange based
 
         for(int i=1;i<=6;i++){
             items.put(i,null);
@@ -165,11 +164,11 @@ public class Hero {
                 "Attacker",attacker.heroName,
                 "Attacked",heroName,
                 "DamageReceived",String.valueOf((int) damageAfterReductions),
-                "Transition","(" + currentHp + " -> " + (currentHp - (int) damageAfterReductions) + ")"
+                "Transition","(" + (int)currentHp + " -> " + (int)(currentHp - damageAfterReductions) + ")"
         );
 
 
-        currentHp = (int) Math.round(currentHp - damageAfterReductions);
+        currentHp = roundToFixedDecimal(currentHp - damageAfterReductions,2);
 
         return map;
     }
@@ -219,17 +218,25 @@ public class Hero {
         maxHpOnCurrentAttributes = (int) (baseHp + (strenghtGainedFromLevel1toCurrentWithItems * EXTRA_HP_PER_STRENGTH_POINT) + (double) itemValues.get("Health"));
     }
     private void calculateCurrentHpRegenWithItems(){
-        maxHpRegenOnCurrentAttributes = baseHpRegen + (strenghtGainedFromLevel1toCurrentWithItems * EXTRA_HP_REGEN_PER_STRENGTH_POINT) + (double) itemValues.get("Health Regeneration");
+        hpRegenOnCurrentAttributes = baseHpRegen + (strenghtGainedFromLevel1toCurrentWithItems * EXTRA_HP_REGEN_PER_STRENGTH_POINT) + (double) itemValues.get("Health Regeneration");
         Map<Double,Integer> tarrasqueBonuses = (Map<Double,Integer>) itemValues.get("Max HP Health Regen");
 
-        if(!tarrasqueBonuses.isEmpty()){
+        if(tarrasqueBonuses!=null && !tarrasqueBonuses.isEmpty()){
             for(double key:tarrasqueBonuses.keySet()){
                 double extraRegen = calculatePercentage(maxHpOnCurrentAttributes,key);
-                maxHpRegenOnCurrentAttributes += extraRegen;
+                hpRegenOnCurrentAttributes += extraRegen;
             }
+        }
+        List<Double> hpRegenAmps = (List<Double>) itemValues.get("Health Regen Amp");
+
+        if(hpRegenAmps!=null && !hpRegenAmps.isEmpty()){
+            double maxAmp = hpRegenAmps.stream().max(Double::compare).get();
+            double amped = calculatePercentage(hpRegenOnCurrentAttributes,maxAmp);
+            hpRegenOnCurrentAttributes += amped;
         }
 
     }
+    // Example 100 * 40 / 100 = 40
     private double calculatePercentage(double value, double percentage){
         return value * percentage / 100;
     }
@@ -254,10 +261,24 @@ public class Hero {
         calculateAttackSpeedAndRate();
         calculateArmorBonuses();
     }
+    // 168
     private void calculateAttackSpeedAndRate(){
-        double atkSpeedSum = (baseAgilityPoints + (agilityGainedFromLevel1toCurrentWithItems) * EXTRA_ATK_SPEED_PER_AGILITY_POINT) + (double) itemValues.get("Attack Speed");
 
-        currentAttackSpeed = (baseAttackSpeed + (atkSpeedSum)) / (100.0 * BAT) ;
+        double atkSpeedSum1 = (
+                baseAttackSpeed +
+                ((baseAgilityPoints + agilityGainedFromLevel1toCurrentWithItems) *
+                EXTRA_ATK_SPEED_PER_AGILITY_POINT)
+        );
+        double atkSpeedSum2 = (atkSpeedSum1 +
+                calculatePercentage(atkSpeedSum1 ,(double) itemValues.get("Base Attack Speed"))) +
+                (double) itemValues.get("Attack Speed");
+
+        hudAttackSpeed = (int) atkSpeedSum2;
+
+        atkSpeedSum2 = Math.max(20, Math.min(atkSpeedSum2, 700));
+
+        currentAttackSpeed = (atkSpeedSum2) / (100.0 * BAT) ;
+
         currentAttackSpeed = roundToFixedDecimal(currentAttackSpeed,3);
         currentAttackRate = roundToFixedDecimal( 1 / currentAttackSpeed ,3);
     }
@@ -296,7 +317,7 @@ public class Hero {
      */
     public void maxHpAndManaAccordingToCurrentLevel(){
         currentHp = maxHpOnCurrentAttributes;
-        currentHpRegen = maxHpRegenOnCurrentAttributes;
+        currentHpRegen = hpRegenOnCurrentAttributes;
 
         currentMana = maxManaOnCurrentAttributes;
         currentManaRegen = maxManaRegenOnCurrentAttributes;
@@ -332,11 +353,19 @@ public class Hero {
         return Math.round(num * digits) / digits;
     }
 
-    private static final Set<String> SPECIAL = Set.of("Max HP Health Regen","Evasion");
+    private static final Set<String> SPECIAL = Set.of("Max HP Health Regen","Evasion","Status Resistance","Lifesteal Amp","Health Regen Amp");
+    //Multiple sange based items do not stack and the higher value takes priority
+    private static final Set<String> SANGE_BASED_ITEMS = Set.of("Heaven's Halberd","Sange and Yasha","Kaya and Sange");
     public void updateHerosItem(Item item , boolean add,int inventorySlot) {
 
-        if(add) items.put(inventorySlot,item);
-        else items.put(inventorySlot,null);
+        if(add) {
+            if(items.get(inventorySlot) != null) {
+                updateHerosItem(item,false,inventorySlot);
+            }
+            items.put(inventorySlot,item);
+        } else {
+            items.put(inventorySlot,null);
+        }
 
 
         for(String key:item.mapValues.keySet()){
@@ -380,32 +409,54 @@ public class Hero {
         actionsMap.put("Health Regeneration", () -> calculateCurrentHpRegenWithItems());
         actionsMap.put("Mana Regeneration", () -> calculateCurrentManaRegenWithItems());
         actionsMap.put("Attack Speed", () -> calculateAttackSpeedAndRate());
+        actionsMap.put("Base Attack Speed", () -> calculateAttackSpeedAndRate());
         return actionsMap;
     }
     private void updateSpecialValue(String key,double value,boolean add){
-        if(key.equals("Evasion")){
-            List<Double> evasion = (List<Double>) itemValues.get("Evasion");
+        switch (key){
+            case "Evasion" ->{
+                List<Double> evasion = (List<Double>) itemValues.get("Evasion");
 
-            if(add) evasion.add(value / 100);
-            else evasion.remove(value / 100);
+                if(add) evasion.add(value / 100);
+                else evasion.remove(value / 100);
 
-            calculateEvasion();
-        }else if(key.equals("Max Hp Health Regen")){
-            // The percentage bonus as keys and the number of items that repeat as the value
-            Map<Double,Integer> maxHpRegens = (Map<Double, Integer>) itemValues.get("Max Hp Health Regen");
-            if (add) {
-                maxHpRegens.merge(value, 1, Integer::sum);
-            } else {
-                maxHpRegens.computeIfPresent(value, (keyy, oldValue) -> {
-                    int newValue = oldValue - 1;
-                    if (newValue <= 0) {
-                        maxHpRegens.remove(keyy);
-                    }
-                    return newValue;
-                });
+                calculateEvasion();
             }
+            case "Max Hp Health Regen" ->{
+                // The percentage bonus as keys and the number of items that repeat as the value
+                Map<Double,Integer> maxHpRegens = (Map<Double, Integer>) itemValues.get("Max Hp Health Regen");
+                if (add) {
+                    maxHpRegens.merge(value, 1, Integer::sum);
+                } else {
+                    maxHpRegens.computeIfPresent(value, (keyy, oldValue) -> {
+                        int newValue = oldValue - 1;
+                        if (newValue <= 0) {
+                            maxHpRegens.remove(keyy);
+                        }
+                        return newValue;
+                    });
+                }
 
-            calculateStrengthBasedBonuses();
+                calculateStrengthBasedBonuses();
+            }
+            case "Health Regen Amp" -> {
+                List<Double> hpHegenAmp = (List<Double>) itemValues.get("Health Regen Amp");
+                if(add) hpHegenAmp.add(value);
+                else hpHegenAmp.remove(value);
+                calculateStrengthBasedBonuses();
+            }
+            case "Lifesteal Amp" -> {
+                List<Double> lifestealAmps = (List<Double>) itemValues.get("Lifesteal Amp");
+                if(add) lifestealAmps.add(value);
+                else lifestealAmps.remove(value);
+                //calculateLifeSteal();
+            }
+            case "Status Resistance" ->{
+                List<Double> statusResistances = (List<Double>) itemValues.get("Status Resistance");
+                if(add) statusResistances.add(value);
+                else statusResistances.remove(value);
+                //calculateStatusResistance();
+            }
         }
     }
     private void updateIfNecessary(String key,double value,boolean add) {
