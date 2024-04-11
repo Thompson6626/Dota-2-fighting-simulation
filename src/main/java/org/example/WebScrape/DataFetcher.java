@@ -53,13 +53,21 @@ public class DataFetcher {
             // 23 for universal
             Elements lists = doc.select("ul");
 
-            List<String> attributeString = List.of(
-                    lists.get(20).text(),
-                    lists.get(21).text(),
-                    lists.get(22).text(),
-                    lists.get(23).text()
-            );
-
+            List<String> attributeString = new ArrayList<>();
+            int i = 0;
+            for(Element element:lists){
+                String txt = element.text();
+                if(
+                        txt.contains("Maximum health by") ||
+                        txt.contains("Health regeneration by")
+                ){
+                    for (int j = i; j < i + 4; j++) {
+                        attributeString.add(lists.get(j).text());
+                    }
+                    break;
+                }
+                i++;
+            }
             List<List<Number>> attributeGains = new ArrayList<>();
 
             // Result will look something like this
@@ -124,7 +132,6 @@ public class DataFetcher {
                     .select("tr")
                     .select("td[style=\"text-align:left;\"]")
                     .forEach(element -> heroNames.add(element.text()));
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -178,6 +185,7 @@ public class DataFetcher {
         Elements armourElement = doc.select("td[style=\"font-size:85%; border-top:2px solid black;\"]");
 
         hero.baseArmor = Double.parseDouble(armourElement.get(1).text());
+        hero.baseArmorLevel0 = Double.parseDouble(armourElement.get(0).text());
     }
 
     private static void setBaseAttackTime(Hero hero, Document doc) {
@@ -278,7 +286,6 @@ public class DataFetcher {
      */
     public static int getMaximumPossibleHeroLevel() {
         String url = "https://dota2.fandom.com/wiki/Experience#:~:text=Heroes%20can%20gain%20a%20total,level%20a%20hero%20can%20reach.";
-
         try {
             Document doc = Jsoup.connect(url).get();
 

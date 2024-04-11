@@ -34,7 +34,7 @@ public class CombatLogF {
     };
 
     private final Random random;
-    private Map<Hero, String> heroColor;
+    private final Map<Hero, String> heroColor;
 
     public CombatLogF() {
         heroColor = new IdentityHashMap<>();
@@ -73,7 +73,7 @@ public class CombatLogF {
         combatLogFrame.setVisible(true);
     }
 
-    public void addString(Map<String,String> logs, Hero attacker, Hero defendant){
+    public void addLog(Map<String,String> logs, Hero attacker, Hero defendant,String status){
 
         if(heroColor.isEmpty()){
             String firstHeroColor = COLORS[random.nextInt(COLORS.length)];
@@ -86,24 +86,14 @@ public class CombatLogF {
             heroColor.put(defendant,secondHeroColor);
         }
 
-        String attackerLog = logs.get("Attacker");
-        String defendantLog = logs.get("Attacked");
-        String damageReceivedLog = logs.get("DamageReceived");
-        String transitionLog = logs.get("Transition");
 
 
-        String log = """
-             <html>
-                <font color='%s'>%s</font>\s
-                hits\s
-                <font color='%s'>%s</font>\s
-                for\s
-                <font color='rgb(250, 4, 10)'>%s</font>\s
-                <font color='rgb(30, 255, 0)'>%s</font>
-             </html>
-             """.formatted(heroColor.get(attacker), attackerLog,
-                heroColor.get(defendant), defendantLog,
-                damageReceivedLog, transitionLog);
+        String log = switch (status){
+            case "Attack" -> generateAttackLog(logs, attacker, defendant);
+            case "Kill" -> generateKillLog(attacker, defendant);
+            default -> "Unexpected value";
+        };
+
 
         JLabel label = new JLabel(log);
 
@@ -123,6 +113,40 @@ public class CombatLogF {
             }
         }, TEXT_LIFESPAN);
     }
+
+    private String generateAttackLog(Map<String,String> logs, Hero attacker, Hero defendant){
+        String damageReceivedLog = logs.get("DamageReceived");
+        String transitionLog = logs.get("Transition");
+
+        return """
+             <html>
+                <font color='%s'>%s</font>\s
+                hits\s
+                <font color='%s'>%s</font>\s
+                for\s
+                <font color='rgb(250, 4, 10)'>%s</font>\s
+                <font color='rgb(30, 255, 0)'>%s</font>
+             </html>
+             """.formatted(heroColor.get(attacker), attacker.heroName,
+                heroColor.get(defendant), defendant.heroName,
+                damageReceivedLog, transitionLog);
+    }
+
+    private String generateKillLog(Hero attacker, Hero defendant){
+
+        return """
+             <html>
+                <font color='%s'>%s</font>\s
+                is killed by\s
+                <font color='%s'>%s</font>!
+             </html>
+             """.formatted(heroColor.get(defendant), defendant.heroName,
+                heroColor.get(attacker), attacker.heroName);
+    }
+
+
+
+
     public void closeFrameAndPanel() {
         // Close the frame and panel
         combatLogFrame.dispose();

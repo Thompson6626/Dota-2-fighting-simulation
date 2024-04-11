@@ -114,7 +114,16 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
         for (JButton button : buttons) {
             if(source == button){
                 if(heroListener != null){
+
+                    // Removing all items
+                    for(int slotIndex:hero.items.keySet()){
+                        hero.updateHerosItem(hero.items.get(slotIndex),false,slotIndex);
+                    }
+                    // -1 or 0 because the neutral item has its own space
+                    hero.updateHerosItem(hero.neutralItem,false,-1);
+
                     DataFetcher.fillHeroStats(hero,button.getText());
+
                     notifyHeroUpdated(hero);
                 }
                 if(itemListener != null || neutralListener != null){

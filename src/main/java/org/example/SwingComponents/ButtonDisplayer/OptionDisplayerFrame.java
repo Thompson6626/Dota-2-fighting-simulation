@@ -16,12 +16,18 @@ public class OptionDisplayerFrame extends JFrame {
     private final OptionDisplayerPanel chooserPanel;
     private static final Dimension FRAME_SIZE = new Dimension(FRAME_WIDTH, FRAME_HEIGHT);
 
-    public OptionDisplayerFrame(HeroUpdateListener listener, Hero hero,List<String> heroNames) {
+    // For heroes
+    public OptionDisplayerFrame(
+            HeroUpdateListener listener,
+            Hero hero,
+            List<String> heroNames
+    ) {
         chooserPanel = new OptionDisplayerPanel(listener, hero, heroNames);
         this.add(chooserPanel);
         initializeGUI("a hero");
     }
 
+    // Purchasable items
     public OptionDisplayerFrame(
             ItemUpdateListener listener,
             Hero hero,
@@ -33,6 +39,7 @@ public class OptionDisplayerFrame extends JFrame {
         this.add(chooserPanel);
         initializeGUI("an item");
     }
+    // Neutral items
     public OptionDisplayerFrame(
             NeutralUpdateListener listener,
             Hero hero,
@@ -46,7 +53,7 @@ public class OptionDisplayerFrame extends JFrame {
 
     private void initializeGUI(String text){
         this.setPreferredSize(FRAME_SIZE);
-        this.setTitle("Choose " + text);
+        this.setTitle("Choose "+ text);
         this.pack();
         this.setVisible(true);
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

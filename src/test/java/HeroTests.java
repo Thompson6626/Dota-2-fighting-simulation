@@ -159,7 +159,7 @@ public class HeroTests {
 
     @DisplayName("Testing one sided fight 15 times")
     @Test
-    public void testOneSidedFight10Times(){
+    public void testOneSidedFight15Times(){
         Hero puck = new Hero();
         DataFetcher.fillHeroStats(puck,"Puck");
         marci.heroUpdateToMatchLevel(15);
@@ -194,22 +194,6 @@ public class HeroTests {
     }
 
     @Test
-    public void testOn2NagaSirens(){
-
-        //On level one the only damage values should be 22-23 or 34-35-36
-        Hero naga1 = new Hero();
-        Hero naga2 = new Hero();
-
-        DataFetcher.fillHeroStats(naga1,"Naga Siren");
-        DataFetcher.fillHeroStats(naga2,"Naga Siren");
-
-        int[] res = Fight.fight(naga1,naga2,2);
-
-        System.out.println("Naga 1 won "+res[0] + " times");
-        System.out.println("Naga 2 won "+res[1] + " times");
-    }
-
-    @Test
     public void testOnTerrorbladeWithAlacrityOnLevel8Matches(){
         Hero tb = new Hero();
         DataFetcher.fillHeroStats(tb,"Terrorblade");
@@ -236,29 +220,6 @@ public class HeroTests {
     }
 
     @Test
-    public void testMultipleMoonShardsGiveCorrectAttackSpeed(){
-
-        Item item = DataFetcher.getItem("Moon Shard");
-        Item item2 = DataFetcher.getItem("Moon Shard");
-        Item item3 = DataFetcher.getItem("Moon Shard");
-        Item item4 = DataFetcher.getItem("Moon Shard");
-        Item item5 = DataFetcher.getItem("Moon Shard");
-        Item item6 = DataFetcher.getItem("Moon Shard");
-
-        System.out.println(marci.currentAttackSpeed);
-        marci.updateHerosItem(item,true,1);
-        marci.updateHerosItem(item2,true,2);
-        marci.updateHerosItem(item3,true,3);
-        marci.updateHerosItem(item4,true,4);
-        marci.updateHerosItem(item5,true,5);
-        marci.updateHerosItem(item6,true,6);
-
-        System.out.println(marci.currentAttackSpeed);
-        System.out.println(marci.currentAttackRate);
-
-    }
-
-    @Test
     public void testButterfliesOnLevel16Templar(){
 
         Hero ta = new Hero();
@@ -272,6 +233,5 @@ public class HeroTests {
         ta.updateHerosItem(item2,true,2);
 
         assertEquals(337 , ta.hudAttackSpeed);
-        System.out.println(ta.currentAttackRate);
     }
 }

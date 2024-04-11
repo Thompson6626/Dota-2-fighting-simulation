@@ -13,6 +13,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.example.WebScrape.DataFetcher.MAXIMUM_HERO_LEVEL;
@@ -361,17 +362,23 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
     public void onHeroUpdated(Hero hero) {
         lastButtonClicked.setText(hero.heroName);
 
-        for (int i = 0; i < comboBoxes.length; i++) {
+        int i = 0;
+        for (; i < comboBoxes.length; i++) {
             if (comboBoxes[i] != null && lastButtonClicked == heroChooseButtons[i]) {
                 comboBoxes[i].setSelectedIndex(0);
                 break;
             }
         }
+        // Resetting buttons text
+        JButton[] buttons = itemsButtons[i];
 
-        for(JLabel label:heroWins) {
+        for(JButton itemButton:buttons)
+            itemButton.setText("");
+
+        neutralButtons[i].setText("");
+
+        for(JLabel label:heroWins)
             label.setText("0");
-        }
-
 
     }
     @Override

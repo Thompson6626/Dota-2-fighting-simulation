@@ -5,6 +5,7 @@ import org.example.HeroClass.Hero;
 import org.example.SwingComponents.CombatLog.CombatLogF;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
 
@@ -16,6 +17,7 @@ public class Fight {
     }
 
     public static void fightAsync(Hero firstHero, Hero secHero, int times, FightResultCallback callback) {
+
         SwingWorker<int[], Void> worker = new SwingWorker<>() {
             @Override
             protected int[] doInBackground() {
@@ -43,7 +45,6 @@ public class Fight {
             switch (res){
                 case -1 -> leftWon++;
                 case 1 -> rightWon++;
-                case 0 -> leftWon += 0;
             }
         }
 
@@ -57,6 +58,7 @@ public class Fight {
 
         if(combatLogF == null) combatLogF = new CombatLogF();
 
+
         // Schedule HP and mana regeneration task
         ScheduledFuture<?> hpAndManaFuture = executor.scheduleAtFixedRate(() -> {
             firstHero.regenerateHpAndMana();
@@ -64,24 +66,22 @@ public class Fight {
         }, 100, 100, TimeUnit.MILLISECONDS);
 
         // Schedule first hero's attack
-        long firstHeroDelay = Math.round(firstHero.currentAttackSpeed * 1000);
         long firstHeroCooldown = Math.round(firstHero.currentAttackRate * 1000);
 
         ScheduledFuture<?> firstHeroAttackFuture = executor.scheduleAtFixedRate(() -> {
             Map<String,String> logs = firstHero.attackEnemyHero(secondHero);
 
-            combatLogF.addString(logs,firstHero,secondHero);
-        }, firstHeroDelay, firstHeroCooldown, TimeUnit.MILLISECONDS);
+            combatLogF.addLog(logs,firstHero,secondHero,"Attack");
+        }, firstHeroCooldown, firstHeroCooldown, TimeUnit.MILLISECONDS);
 
         // Schedule second hero's attack
-        long secondHeroDelay = Math.round(secondHero.currentAttackSpeed * 1000);
         long secondHeroCooldown = Math.round(secondHero.currentAttackRate * 1000);
 
         ScheduledFuture<?> secondHeroAttackFuture = executor.scheduleAtFixedRate(() -> {
             Map<String,String> logs = secondHero.attackEnemyHero(firstHero);
 
-            combatLogF.addString(logs,secondHero,firstHero);
-        }, secondHeroDelay, secondHeroCooldown, TimeUnit.MILLISECONDS);
+            combatLogF.addLog(logs,secondHero,firstHero,"Attack");
+        }, secondHeroCooldown, secondHeroCooldown, TimeUnit.MILLISECONDS);
 
         // Check for fight completion
         executor.submit(() -> {
@@ -95,8 +95,10 @@ public class Fight {
             // Determine the result based on the current HP of the heroes
             if (firstHero.currentHp <= 0) {
                 fightCompleted.complete(1); // Second hero won
+                combatLogF.addLog(null,secondHero,firstHero,"Kill");
             } else {
                 fightCompleted.complete(-1); // First hero won
+                combatLogF.addLog(null,firstHero,secondHero,"Kill");
             }
 
         });
@@ -123,6 +125,7 @@ public class Fight {
         return result;
 
     }
+
 
     public static CombatLogF getCombatLogF() {
         return combatLogF;
