@@ -1,21 +1,19 @@
 package org.example.HeroClass;
 
+import org.example.DataFetch.DataFetcher;
+import org.example.ItemClass.QuantityValueWrapper;
 import org.example.ItemClass.Item;
 
 import java.util.*;
 import java.util.List;
 
-import static org.example.WebScrape.DataFetcher.EXTRA_DAMAGE_PER_ATTRIBUTE_FOR_UNIVERSAL;
-import static org.example.WebScrape.DataFetcher.EXTRA_MANA_PER_INTELLIGENCE_POINT;
-import static org.example.WebScrape.DataFetcher.EXTRA_HP_PER_STRENGTH_POINT;
-import static org.example.WebScrape.DataFetcher.EXTRA_ATK_SPEED_PER_AGILITY_POINT;
-import static org.example.WebScrape.DataFetcher.EXTRA_MAGIC_RES_PER_INTELLIGENCE_POINT;
-import static org.example.WebScrape.DataFetcher.EXTRA_HP_REGEN_PER_STRENGTH_POINT;
-import static org.example.WebScrape.DataFetcher.EXTRA_MANA_REGEN_PER_INTELLIGENCE_POINT;
+import static org.example.DataFetch.DataFetcher.*;
+import static org.example.HeroClass.PrimaryAttribute.*;
+import static org.example.ItemClass.BonusKeywords.*;
 
 
 public class Hero {
-
+    private static final int ACTIVE_INVENTORY_SLOTS = 6;
     public String heroName = "Choose a hero";
 
     public int baseHp;
@@ -25,12 +23,12 @@ public class Hero {
     public double baseManaRegen;
 
     public double baseArmor;
-    public double baseMagicResistance;
+    public int baseMagicResistance;
 
     public int baseDamageLow;
     public int baseDamageHigh;
 
-    public boolean isMelee;
+    public AttackType attackType;
     public int naturalDamageBlock;
     public int naturalDamageBlockPercentage;
 
@@ -39,16 +37,10 @@ public class Hero {
      * Base Attack Time
      */
     public double BAT;
-
     public double currentAttackSpeed;
-    /**
-     * Time between attacks
-     */
     public double currentAttackRate;
-    /**
-     * Substracted 1 to current level because the level 1 stats are already precalculated
-     */
-    public int currentLevel = 1;
+    public double attackPoint;
+    public int currentLevel;
 
     public double currentArmor;
 
@@ -83,86 +75,117 @@ public class Hero {
     public int baseIntelligencePoints;
     public double intelligenceGainPerLevel;
 
-    public double agilityGainedFromLevel1toCurrent;
-    public double strenghtGainedFromLevel1toCurrent;
-    public double intelligenceGainedFromLevel1toCurrent;
+    public double agilityGainedUntilCurrentLevel;
+    public double strenghtGainedUntilCurrentLevel;
+    public double intelligenceGainedUntilCurrentLevel;
 
-    public double agilityGainedFromLevel1toCurrentWithItems;
-    public double strenghtGainedFromLevel1toCurrentWithItems;
-    public double intelligenceGainedFromLevel1toCurrentWithItems;
+    public double agilityGainedUntilCurrentLevelWithItems;
+    public double strenghtGainedUntilCurrentLevelWithItems;
+    public double intelligenceGainedUntilCurrentLevelWithItems;
     public double evasionChance = 0.0;
+    public double restorationMultiplier = 100.0;
     public Map<String,Object> itemValues;
     public int hudAttackSpeed;
-    public Map<Integer, Item> items = new HashMap<>(6);
+    public Map<Integer, Item> items;
     public Item neutralItem = null;
+    //Multiple sange based items do not stack and the higher value takes priority
+    private static final Map<String,List<String>> KAYA_SANGE_YASHA_DERIVATIVES;
+    static {
+        KAYA_SANGE_YASHA_DERIVATIVES = DataFetcher. getSangeKayaYashaDerivatives();
+    }
     private static final List<Integer> PLUS_TWO_ATTRIBUTES = List.of(26,24,23,22,21,19,17);
     private final Random RANDOM_GENERATOR;
+    public boolean isDead = false;
+
     public Hero() {
         RANDOM_GENERATOR = new Random();
 
         itemValues = new HashMap<>();
-        itemValues.put("Intelligence",0.0);
-        itemValues.put("Strength",0.0);
-        itemValues.put("Agility",0.0);
-        itemValues.put("Health",0.0);
-        itemValues.put("Mana",0.0);
-        itemValues.put("Armor",0.0);
-        itemValues.put("Health Regeneration",0.0);
-        itemValues.put("Mana Regeneration",0.0);
-        itemValues.put("Attack Damage",0.0);
-        itemValues.put("Attack Speed",0.0);
-        itemValues.put("Magic Resistance",0.0); //? Percentage
-        itemValues.put("Evasion",new ArrayList<Double>()); //? Percentage
-        itemValues.put("Max HP Health Regen",new HashMap<Double,Integer>()); //??  Percentage
-        itemValues.put("Spell Lifesteal (Hero)",0.0); //? Percentage
-        itemValues.put("Mana Regen Amp",0.0); //? Percentage
-        itemValues.put("Base Attack Speed",0.0); //? Percentage
-        itemValues.put("Health Regen Amp",new ArrayList<Double>()); //? Percentage // Sange based
-        itemValues.put("Spell Damage Amp",0.0); //? Percentage
-        itemValues.put("Lifesteal Amp",new ArrayList<Double>()); //? Percentage  // Sange based
-        itemValues.put("Spell Lifesteal Amp",0.0); //? Percentage
-        itemValues.put("Status Resistance",new ArrayList<Double>()); //? Percentage  // Sange based
+        itemValues.put(BONUS_INTELLIGENCE,0.0);
+        itemValues.put(BONUS_STRENGTH,0.0);
+        itemValues.put(BONUS_AGILITY,0.0);
+        itemValues.put(BONUS_HEALTH,0.0);
+        itemValues.put(BONUS_MANA,0.0);
+        itemValues.put(BONUS_ARMOR,0.0);
+        itemValues.put(BONUS_HEALTH_REGEN,0.0);
+        itemValues.put(BONUS_MANA_REGEN,0.0);
+        itemValues.put(BONUS_ATTACK_DAMAGE,0.0);
+        itemValues.put(BONUS_ATTACK_SPEED,0.0);
+        itemValues.put(BONUS_MAGIC_RES,0.0); //? Percentage
+        itemValues.put(BONUS_EVASION,new ArrayList<Double>()); //? Percentage
+        itemValues.put(BONUS_PERCENTAGE_HEALTH_REGEN,new HashMap<String, QuantityValueWrapper>()); //??  Percentage
+        itemValues.put(BONUS_SPELL_LIFESTEAL,0.0); //? Percentage
+        itemValues.put(BONUS_MANA_REGEN_AMP,0.0); //? Percentage
+        itemValues.put(BONUS_ATTACK_SPEED_PERCENTAGE,0.0); //? Percentage
+        itemValues.put(BONUS_LIFESTEAL,0.0); //? Percentage
 
-        for(int i = 1;i <= 6; i++){
+        // lifesteal amp and hp regen amp
+        // ? Percentage // Sange based
+        itemValues.put(BONUS_HP_REGEN_AMP,new HashMap<String, QuantityValueWrapper>());
+        itemValues.put(BONUS_LIFESTEAL_AMP,new HashMap<String, QuantityValueWrapper>());
+
+        itemValues.put(BONUS_SPELL_AMPLIFICATION,0.0); //? Percentage
+        itemValues.put(BONUS_SPELL_LIFESTEAL_AMP,0.0); //? Percentage
+        itemValues.put(BONUS_STATUS_RESISTANCE,new HashMap<String, QuantityValueWrapper>()); //? Percentage  // Sange based
+
+        items = new HashMap<>(ACTIVE_INVENTORY_SLOTS);
+
+        for(int i = 1; i <= ACTIVE_INVENTORY_SLOTS; i++){
             items.put(i,null);
         }
     }
 
     public Map<String,String> attackEnemyHero(Hero enemy){
         // Finding the damage thats going to be dealt before reductions
-        int randomDamage = RANDOM_GENERATOR.nextInt((currentDamageHigh - currentDamageLow) + 1) + currentDamageLow;
+        if (!isDead){
+            int randomDamage = RANDOM_GENERATOR.nextInt((currentDamageHigh - currentDamageLow) + 1) + currentDamageLow;
 
-        int damage = (int) (randomDamage + (double) itemValues.get("Attack Damage")); // Because the bonus damage from items comes later
+            int damage = (int) (randomDamage + (double) itemValues.get(BONUS_ATTACK_DAMAGE));
+            Map<String,String> logs = enemy.receiveAttack(damage, this);
 
-        return enemy.receiveAttack(damage, this);
+            stealLife(Integer.parseInt(logs.get("DamageReceived")));
+            return logs;
+        }
+        return Collections.emptyMap();
+    }
+    private void stealLife(int damageDone){
+        double lifeStealPercentage =  (Double) this.itemValues.get(BONUS_LIFESTEAL);
+        if((int) this.itemValues.get(BONUS_LIFESTEAL_AMP) > 0){
+            lifeStealPercentage += calculatePercentage(
+                    lifeStealPercentage,
+                    (int) this.itemValues.get(BONUS_LIFESTEAL_AMP)
+            );
+        }
+        int lifeSteal = (int) calculatePercentage(damageDone, lifeStealPercentage);
+        this.currentHp = Math.min(this.currentHp + lifeSteal , this.maxHpOnCurrentAttributes);
     }
     public Map<String,String> receiveAttack(int damageDealtByEnemy , Hero attacker){
-
-        // Damage block comes before
-        // This damage block only works on melee heroes
-        if(naturalDamageBlockPercentage > 0){
-            double chance = RANDOM_GENERATOR.nextDouble();
-
-            if(chance <= (double) naturalDamageBlockPercentage / 100){
-                damageDealtByEnemy -= naturalDamageBlock;
-            }
-        }
-
-        double damageReduced = (double) (damageDealtByEnemy * physicalDamageMultiplier);
-
-        double damageAfterReductions = damageDealtByEnemy - damageReduced;
-
         // If attack is evaded
         if(evasionChance > 0.0 && checkChance(evasionChance))
             return Collections.emptyMap();
 
+        System.out.println(" 1 ");
+        if(naturalDamageBlockPercentage > 0 && checkChance(naturalDamageBlockPercentage))
+            damageDealtByEnemy -= naturalDamageBlock;
 
+        System.out.println(" 2 ");
+
+        double damageReduced = (double) (damageDealtByEnemy * physicalDamageMultiplier);
+        double damageAfterReductions = damageDealtByEnemy - damageReduced;
+        System.out.println(" 3 ");
         Map<String,String> map = Map.of(
-                "DamageReceived",String.valueOf((int) damageAfterReductions),
-                "Transition","(" + (int)currentHp + " -> " + (int)(currentHp - damageAfterReductions) + ")"
+                "DamageReceived", String.valueOf((int) damageAfterReductions),
+                "Transition", String.format(
+                        "(%d -> %d)",
+                        currentHp,
+                        currentHp - damageAfterReductions
+                )
         );
-
+        System.out.println(map);
+        System.out.println(" 4 ");
         currentHp = roundToFixedDecimal(currentHp - damageAfterReductions,2);
+
+        if (currentHp <= 0) isDead = true;
 
         return map;
     }
@@ -171,26 +194,18 @@ public class Hero {
         return RANDOM_GENERATOR.nextDouble() <= chance;
     }
 
-    public void heroUpdateToMatchLevel(int level){
-        level -= 1;
+    public void updateToMatchLevel(int level){
         currentLevel = level;
 
         //With items
-        calculateAgilityGainedFromLevel1toCurrent();
-        calculateStrengthGainedFromLevel1toCurrent();
-        calculateIntelligenceGainedFromLevel1toCurrent();
+        calculateAgilityGainedUntilCurrentLevel();
+        calculateStrengthGainedUntilCurrentLevel();
+        calculateIntelligenceGainedUntilCurrentLevel();
 
         //Without items
-        calculateAgilityGainedFromLevel1toCurrentWithItems();
-        calculateStrengthGainedFromLevel1toCurrentWithItems();
-        calculateIntelligenceGainedFromLevel1toCurrentWithItems();
-
-        /*
-        // Updating current attribute points
-        currentStrength = baseStrengthPoints + strengthGained + bonusItemStrength;
-        currentAgility = baseAgilityPoints + agilityGained + bonusItemAgility;
-        currentIntelligence = baseIntelligencePoints + intelligenceGained + bonusItemIntelligence;
-         */
+        calculateAgilityGainedUntilCurrentLevelWithItems();
+        calculateStrengthGainedUntilCurrentLevelWithItems();
+        calculateIntelligenceGainedUntilCurrentLevelWithItems();
 
         calculateStrengthBasedBonuses();
 
@@ -204,40 +219,59 @@ public class Hero {
         calculateCurrentPossibleDamage();
 
     }
-
     private void calculateStrengthBasedBonuses(){
         // Strength
-        calculateCurrentHpWithItems();
+        calculateMaxCurrentHp();
         calculateCurrentHpRegenWithItems();
     }
-    private void calculateCurrentHpWithItems(){
-        maxHpOnCurrentAttributes = (int) (baseHp + (strenghtGainedFromLevel1toCurrentWithItems * EXTRA_HP_PER_STRENGTH_POINT) + (double) itemValues.get("Health"));
+    private void calculateMaxCurrentHp(){
+        maxHpOnCurrentAttributes = (int) (baseHp +
+                (strenghtGainedUntilCurrentLevelWithItems * EXTRA_HP_PER_STRENGTH_POINT) +
+                (double) itemValues.get(BONUS_HEALTH));
     }
     private void calculateCurrentHpRegenWithItems(){
-        hpRegenOnCurrentAttributes = baseHpRegen + (strenghtGainedFromLevel1toCurrentWithItems * EXTRA_HP_REGEN_PER_STRENGTH_POINT) + (double) itemValues.get("Health Regeneration");
-        Map<Double,Integer> tarrasqueBonuses = (Map<Double,Integer>) itemValues.get("Max HP Health Regen");
+        hpRegenOnCurrentAttributes =
+                baseHpRegen +
+                (strenghtGainedUntilCurrentLevelWithItems * EXTRA_HP_REGEN_PER_STRENGTH_POINT) +
+                (double) itemValues.get(BONUS_HEALTH_REGEN);
+
+        hpRegenOnCurrentAttributes = roundToFixedDecimal(hpRegenOnCurrentAttributes,2);
+        Map<String, QuantityValueWrapper> tarrasqueBonuses = (Map<String, QuantityValueWrapper>) itemValues.get(BONUS_PERCENTAGE_HEALTH_REGEN);
 
         // The values of the tarrasqueBonuses map has the count of how many times the same item gives the bonus
         if(tarrasqueBonuses != null && !tarrasqueBonuses.isEmpty()){
-            for(double key:tarrasqueBonuses.keySet()){
-                double extraRegen = calculatePercentage(maxHpOnCurrentAttributes,key);
+            for(String itemName:tarrasqueBonuses.keySet()){
+                QuantityValueWrapper qVW = tarrasqueBonuses.get(itemName);
+                double extraRegen = calculatePercentage(maxHpOnCurrentAttributes,qVW.getValue());
                 hpRegenOnCurrentAttributes += extraRegen;
             }
         }
-        List<Double> hpRegenAmps = (List<Double>) itemValues.get("Health Regen Amp");
+        Map<String, QuantityValueWrapper> hpRegenAmps = ( Map<String, QuantityValueWrapper>) itemValues.get(BONUS_HP_REGEN_AMP);
 
-        if(hpRegenAmps!=null && !hpRegenAmps.isEmpty()){
-            double maxAmp = hpRegenAmps.stream().max(Double::compare).get();
-            double amped = calculatePercentage(hpRegenOnCurrentAttributes,maxAmp);
+        List<String> sangeDerivates = KAYA_SANGE_YASHA_DERIVATIVES.get("Sange");
+        double highestFromSange = 0.0;
+        if(hpRegenAmps != null && !hpRegenAmps.isEmpty()){
+            for (String itemName : hpRegenAmps.keySet()){
+                QuantityValueWrapper qVW = hpRegenAmps.get(itemName);
+                if (sangeDerivates.contains(itemName)){
+                    highestFromSange = Math.max(highestFromSange , qVW.getValue());
+                }else{
+                    double amped = calculatePercentage(hpRegenOnCurrentAttributes,qVW.getValue());
+                    hpRegenOnCurrentAttributes += amped;
+                }
+            }
+            double amped = calculatePercentage(hpRegenOnCurrentAttributes,highestFromSange);
             hpRegenOnCurrentAttributes += amped;
         }
+
+
 
     }
 
     /**
      *
      * @param value
-     * @param percentage Not decimal
+     * @param percentage
      * @return The precentage of the first value
      */
     private double calculatePercentage(double value, double percentage){
@@ -250,30 +284,45 @@ public class Hero {
         calculateCurrentMagicResistanceWithItems();
     }
     private void calculateCurrentManaRegenWithItems(){
-        maxManaRegenOnCurrentAttributes = baseManaRegen + (intelligenceGainedFromLevel1toCurrentWithItems * EXTRA_MANA_REGEN_PER_INTELLIGENCE_POINT) + (double)itemValues.get("Mana Regeneration");
+        maxManaRegenOnCurrentAttributes =
+                baseManaRegen +
+                (intelligenceGainedUntilCurrentLevelWithItems * EXTRA_MANA_REGEN_PER_INTELLIGENCE_POINT) +
+                (double) itemValues.get(BONUS_MANA_REGEN);
+
+        maxManaRegenOnCurrentAttributes = roundToFixedDecimal(maxManaRegenOnCurrentAttributes,2);
     }
     private void calculateCurrentManaWithItems(){
-        maxManaOnCurrentAttributes = (int) (baseMana + (intelligenceGainedFromLevel1toCurrentWithItems * EXTRA_MANA_PER_INTELLIGENCE_POINT) + (double)itemValues.get("Mana"));
+        maxManaOnCurrentAttributes =
+                (int) (baseMana +
+                (intelligenceGainedUntilCurrentLevelWithItems * EXTRA_MANA_PER_INTELLIGENCE_POINT) +
+                (double) itemValues.get(BONUS_MANA));
     }
     private void calculateCurrentMagicResistanceWithItems(){
-        currentMagicResOnCurrentAttrtibutes = baseMagicResistance + (intelligenceGainedFromLevel1toCurrentWithItems * EXTRA_MAGIC_RES_PER_INTELLIGENCE_POINT) + (double)itemValues.get("Magic Resistance");
+        currentMagicResOnCurrentAttrtibutes =
+                baseMagicResistance +
+                (intelligenceGainedUntilCurrentLevelWithItems * EXTRA_MAGIC_RES_PER_INTELLIGENCE_POINT) +
+                (double) itemValues.get(BONUS_MAGIC_RES);
     }
 
     private void calculateAgilityBasedBonuses(){
         calculateAttackSpeedAndRate();
-        calculateArmorBonuses();
+        calculateArmor();
     }
     // 168
     private void calculateAttackSpeedAndRate(){
 
         double atkSpeedSum1 = (
                 baseAttackSpeed +
-                ((baseAgilityPoints + agilityGainedFromLevel1toCurrentWithItems) *
+                (agilityGainedUntilCurrentLevelWithItems *
                 EXTRA_ATK_SPEED_PER_AGILITY_POINT)
         );
-        double atkSpeedSum2 = (atkSpeedSum1 +
-                calculatePercentage(atkSpeedSum1 ,(double) itemValues.get("Base Attack Speed"))) +
-                (double) itemValues.get("Attack Speed");
+        double atkSpeedSum2 =
+                (atkSpeedSum1 +
+                calculatePercentage(
+                        atkSpeedSum1 ,
+                        (double) itemValues.get(BONUS_ATTACK_SPEED_PERCENTAGE)
+                )) +
+                (double) itemValues.get(BONUS_ATTACK_SPEED);
 
         hudAttackSpeed = (int) atkSpeedSum2;
 
@@ -284,13 +333,12 @@ public class Hero {
         currentAttackSpeed = roundToFixedDecimal(currentAttackSpeed,3);
         currentAttackRate = roundToFixedDecimal( 1 / currentAttackSpeed ,3);
     }
-    private void calculateArmorBonuses(){
+    private void calculateArmor(){
 
-        /*
-        currentArmor = baseArmor + (agilityGainedFromLevel1toCurrentWithItems * EXTRA_ARMOR_PER_AGILITY) + (double) itemValues.get("Armor");
-        currentArmor = roundToFixedDecimal(currentArmor,2);
-        */
-        currentArmor = baseArmorLevel0 + ((baseAgilityPoints + agilityGainedFromLevel1toCurrentWithItems ) / 6)+ (double) itemValues.get("Armor");
+        currentArmor =
+                baseArmor +
+                armorFromAgility(agilityGainedUntilCurrentLevelWithItems) +
+                (double) itemValues.get(BONUS_ARMOR);
         currentArmor = roundToFixedDecimal(currentArmor,2);
 
         physicalDamageMultiplier = (0.06 * currentArmor)/(1 + 0.06 * Math.abs(currentArmor));
@@ -301,9 +349,9 @@ public class Hero {
         currentDamageLow = baseDamageLow;
         currentDamageHigh = baseDamageHigh;
 
-        int agiWithItems = (int) agilityGainedFromLevel1toCurrentWithItems;
-        int strWithItems = (int) strenghtGainedFromLevel1toCurrentWithItems;
-        int intellWithItems = (int) intelligenceGainedFromLevel1toCurrentWithItems;
+        int agiWithItems = (int) agilityGainedUntilCurrentLevelWithItems;
+        int strWithItems = (int) strenghtGainedUntilCurrentLevelWithItems;
+        int intellWithItems = (int) intelligenceGainedUntilCurrentLevelWithItems;
 
         int bonusAttribute = switch (primaryAttribute) {
             case AGILITY -> agiWithItems;
@@ -311,8 +359,9 @@ public class Hero {
             case INTELLIGENCE -> intellWithItems;
             case UNIVERSAL ->  (int) Math.round(
                     (agiWithItems + strWithItems + intellWithItems)
-                            * EXTRA_DAMAGE_PER_ATTRIBUTE_FOR_UNIVERSAL
+                    * EXTRA_DAMAGE_PER_ATTRIBUTE_FOR_UNIVERSAL
             );
+            case UNKNOWN -> 0;
         };
 
         currentDamageLow += bonusAttribute;
@@ -334,27 +383,33 @@ public class Hero {
      *  Applying hp and mana regen to current hp and mana but not going past the maximum
      */
     public void regenerateHpAndMana() {
-        currentHp = Math.min((currentHp + (currentHpRegen / 10)), maxHpOnCurrentAttributes);
-        currentMana = Math.min((currentMana + (currentManaRegen / 10)), maxManaOnCurrentAttributes);
+        if (!isDead){
+            currentHp = Math.min((currentHp + (currentHpRegen / 10)), maxHpOnCurrentAttributes);
+            currentMana = Math.min((currentMana + (currentManaRegen / 10)), maxManaOnCurrentAttributes);
+        }
     }
-    public double calculateAttributeGainWithoutItems(double gainPerLevel){
-        return roundToFixedDecimal(gainPerLevel * currentLevel, 1);
+    public double calculateAttributeGainedWithoutItems(double gainPerLevel, int basePoints){
+        return roundToFixedDecimal(basePoints + (gainPerLevel * (currentLevel - 1)), 1);
     }
-    public double calculateAttributeGainWithItems(String attribute){
+    public double calculateAttributeGainWithItems(PrimaryAttribute attribute){
 
         double attributesGained = switch (attribute){
-            case "Agility" -> calculateAttributeGainWithoutItems(agilityGainPerLevel);
-            case "Strength" -> calculateAttributeGainWithoutItems(strengthGainPerLevel);
-            case "Intelligence" -> calculateAttributeGainWithoutItems(intelligenceGainPerLevel);
+            case AGILITY -> calculateAttributeGainedWithoutItems(agilityGainPerLevel,baseAgilityPoints);
+            case STRENGTH -> calculateAttributeGainedWithoutItems(strengthGainPerLevel,baseStrengthPoints);
+            case INTELLIGENCE -> calculateAttributeGainedWithoutItems(intelligenceGainPerLevel,baseIntelligencePoints);
             default -> throw new IllegalStateException("No attribute with name: " + attribute);
         };
 
         for (int level : PLUS_TWO_ATTRIBUTES) {
-            attributesGained += (currentLevel + 1 >= level) ? 2 : 0;
+            attributesGained += (currentLevel >= level) ? 2 : 0;
         }
 
-        // Strength Agility and Intelligence are double in the item values
-        Double itemBonus = (Double) itemValues.get(attribute);
+        Double itemBonus = (Double) switch (attribute){
+            case STRENGTH -> itemValues.get(BONUS_STRENGTH);
+            case AGILITY -> itemValues.get(BONUS_AGILITY);
+            case INTELLIGENCE -> itemValues.get(BONUS_INTELLIGENCE);
+            default -> null;
+        };
 
         return (itemBonus != null) ? attributesGained + itemBonus : attributesGained;
     }
@@ -364,9 +419,15 @@ public class Hero {
         return Math.round(num * digits) / digits;
     }
 
-    private static final Set<String> SPECIAL = Set.of("Max HP Health Regen","Evasion","Status Resistance","Lifesteal Amp","Health Regen Amp");
-    //Multiple sange based items do not stack and the higher value takes priority
-    private static final Set<String> SANGE_BASED_ITEMS = Set.of("Heaven's Halberd","Sange and Yasha","Kaya and Sange");
+    private static final List<String> SPECIAL = List.of(
+            BONUS_PERCENTAGE_HEALTH_REGEN,
+            BONUS_EVASION,
+            BONUS_STATUS_RESISTANCE,
+            BONUS_LIFESTEAL_AMP,
+            BONUS_HP_REGEN_AMP
+    );
+
+
     public void updateHerosItem(Item item , boolean add,int inventorySlot) {
         if(item == null) return;
 
@@ -381,103 +442,108 @@ public class Hero {
             }
         }
 
-        for(String key:item.mapValues.keySet()){
-            if(itemValues.containsKey(key)){
-                double value = item.mapValues.get(key); // Value being added
+        for(Map<String,Object> map:item.bonuses){
+            // each map has 3 keys :  key,header and value
+            for(String key : map.keySet()){
+                String keyVal = (String) map.get(key);
+                if(itemValues.containsKey(keyVal)){
+                    double value = Double.parseDouble((String) map.get("value")); // Value being added
 
-                if(SPECIAL.contains(key)){
-                    updateSpecialValue(key,value,add);
-                }else{
-                    double prev = (double) itemValues.get(key);  // Previous value
+                    if(SPECIAL.contains(keyVal)){
+                        updateSpecialValue(keyVal,item.name,value,add);
+                    }else{
+                        double prev = (double) itemValues.getOrDefault(keyVal,0.0);  // Previous value
 
-                    itemValues.put(key, prev + (add ? value : -value));
+                        itemValues.put(keyVal, prev + (add ? value : -value));
 
-                    updateIfNecessary(key,value,add);
+                        updateIfNecessary(keyVal,value,add);
+                    }
                 }
-
             }
 
-
         }
+
     }
     private final Map<String,Runnable> ACTIONS_MAP = createActionsMap();
     private Map<String, Runnable> createActionsMap() {
         Map<String, Runnable> actionsMap = new HashMap<>();
-        actionsMap.put("Agility", () -> {
-            calculateAgilityGainedFromLevel1toCurrentWithItems();
+        actionsMap.put(BONUS_AGILITY, () -> {
+            calculateAgilityGainedUntilCurrentLevelWithItems();
             calculateAgilityBasedBonuses();
         });
-        actionsMap.put("Strength", () -> {
-            calculateStrengthGainedFromLevel1toCurrentWithItems();
+        actionsMap.put(BONUS_STRENGTH, () -> {
+            calculateStrengthGainedUntilCurrentLevelWithItems();
             calculateStrengthBasedBonuses();
         });
-        actionsMap.put("Intelligence", () -> {
-            calculateIntelligenceGainedFromLevel1toCurrentWithItems();
+        actionsMap.put(BONUS_INTELLIGENCE, () -> {
+            calculateIntelligenceGainedUntilCurrentLevelWithItems();
             calculateIntelligenceBasedBonuses();
         });
-        actionsMap.put("Armor",() -> calculateArmorBonuses());
-        actionsMap.put("Health", () -> calculateStrengthBasedBonuses());
-        actionsMap.put("Mana", () -> calculateCurrentManaWithItems());
-        actionsMap.put("Magic Resistance", () -> calculateCurrentMagicResistanceWithItems());
-        actionsMap.put("Health Regeneration", () -> calculateCurrentHpRegenWithItems());
-        actionsMap.put("Mana Regeneration", () -> calculateCurrentManaRegenWithItems());
-        actionsMap.put("Attack Speed", () -> calculateAttackSpeedAndRate());
-        actionsMap.put("Base Attack Speed", () -> calculateAttackSpeedAndRate());
-        return actionsMap;
+        actionsMap.put(BONUS_ARMOR,() -> calculateArmor());
+        actionsMap.put(BONUS_HEALTH, () -> calculateStrengthBasedBonuses());
+        actionsMap.put(BONUS_MANA, () -> calculateCurrentManaWithItems());
+        actionsMap.put(BONUS_MAGIC_RES, () -> calculateCurrentMagicResistanceWithItems());
+        actionsMap.put(BONUS_HEALTH_REGEN, () -> calculateCurrentHpRegenWithItems());
+        actionsMap.put(BONUS_MANA_REGEN, () -> calculateCurrentManaRegenWithItems());
+        actionsMap.put(BONUS_ATTACK_SPEED, () -> calculateAttackSpeedAndRate());
+        actionsMap.put(BONUS_ATTACK_SPEED_PERCENTAGE, () -> calculateAttackSpeedAndRate());
+        return Collections.unmodifiableMap(actionsMap);
     }
-    private void updateSpecialValue(String key,double value,boolean add){
+    private void updateSpecialValue(
+            String key,
+            String itemName,
+            double value,
+            boolean add
+    ){
         switch (key){
-            case "Evasion" ->{
-                List<Double> evasion = (List<Double>) itemValues.get("Evasion");
+            case BONUS_EVASION ->{
+                List<Double> evasion = (List<Double>) itemValues.get(BONUS_EVASION);
 
-                if(add) evasion.add(value / 100);
+                if(add) evasion.add( value / 100);
                 else evasion.remove(value / 100);
 
                 calculateEvasion();
             }
-            case "Max Hp Health Regen" ->{
+            case BONUS_PERCENTAGE_HEALTH_REGEN ->{
                 // The percentage bonus as keys and the number of items that repeat as the value
-                Map<Double,Integer> maxHpRegens = (Map<Double, Integer>) itemValues.get("Max Hp Health Regen");
-                if (add) {
-                    maxHpRegens.merge(value, 1, Integer::sum);
-                } else {
-                    maxHpRegens.computeIfPresent(value, (keyy, oldValue) -> {
-                        int newValue = oldValue - 1;
-                        if (newValue <= 0) {
-                            maxHpRegens.remove(keyy);
-                        }
-                        return newValue;
-                    });
-                }
-
+                updateQuantity(itemName,key,add,value);
                 calculateStrengthBasedBonuses();
             }
-            case "Health Regen Amp" -> {
-                List<Double> hpHegenAmp = (List<Double>) itemValues.get("Health Regen Amp");
-                if(add) hpHegenAmp.add(value);
-                else hpHegenAmp.remove(value);
+            case BONUS_HP_REGEN_AMP -> {
+                // For Hp regen Amplification
+                updateQuantity(itemName,BONUS_HP_REGEN_AMP,add,value);
                 calculateStrengthBasedBonuses();
+                // For lifesteal amplification
+                updateQuantity(itemName,BONUS_LIFESTEAL_AMP,add,value);
             }
-            case "Lifesteal Amp" -> {
-                List<Double> lifestealAmps = (List<Double>) itemValues.get("Lifesteal Amp");
-                if(add) lifestealAmps.add(value);
-                else lifestealAmps.remove(value);
-                //calculateLifeSteal();
-            }
-            case "Status Resistance" ->{
-                List<Double> statusResistances = (List<Double>) itemValues.get("Status Resistance");
-                if(add) statusResistances.add(value);
-                else statusResistances.remove(value);
-                //calculateStatusResistance();
+            case BONUS_STATUS_RESISTANCE -> {
+                updateQuantity(itemName,key,add,value);
             }
         }
+    }
+    private void updateQuantity(
+            String itemName,
+            String key,
+            boolean add,
+            double value
+    ){
+        Map<String, QuantityValueWrapper> map = (Map<String, QuantityValueWrapper>) itemValues.get(key);
+        map.compute(itemName, (k, oldValue) ->
+                (add ?
+                        ((oldValue == null) ? new QuantityValueWrapper(value) : oldValue.incrementQuantity())
+                        :
+                        ((oldValue != null) ?
+                                (oldValue.decrementQuantity().getQuantity() <= 0 ? null : oldValue)
+                                :
+                                null)
+                ));
     }
     private void updateIfNecessary(String key,double value,boolean add) {
         ACTIONS_MAP.getOrDefault(key, () -> {}).run();
     }
 
     public void calculateEvasion() {
-        List<Double> evasion = (List<Double>) itemValues.get("Evasion");
+        List<Double> evasion = (List<Double>) itemValues.get(BONUS_EVASION);
         if(evasion.isEmpty()){
             evasionChance = 0.0;
             return;
@@ -491,23 +557,23 @@ public class Hero {
         evasionChance = 1.0 - (1.0 - tmp);
     }
 
-    public void calculateAgilityGainedFromLevel1toCurrent() {
-        agilityGainedFromLevel1toCurrent = calculateAttributeGainWithoutItems(agilityGainPerLevel);
+    public void calculateAgilityGainedUntilCurrentLevel() {
+        agilityGainedUntilCurrentLevel = calculateAttributeGainedWithoutItems(agilityGainPerLevel,baseAgilityPoints);
     }
-    public void calculateStrengthGainedFromLevel1toCurrent() {
-        strenghtGainedFromLevel1toCurrent = calculateAttributeGainWithoutItems(strengthGainPerLevel);
+    public void calculateStrengthGainedUntilCurrentLevel() {
+        strenghtGainedUntilCurrentLevel = calculateAttributeGainedWithoutItems(strengthGainPerLevel,baseStrengthPoints);
     }
-    public void calculateIntelligenceGainedFromLevel1toCurrent() {
-        intelligenceGainedFromLevel1toCurrent = calculateAttributeGainWithoutItems(intelligenceGainPerLevel);
+    public void calculateIntelligenceGainedUntilCurrentLevel() {
+        intelligenceGainedUntilCurrentLevel = calculateAttributeGainedWithoutItems(intelligenceGainPerLevel,baseIntelligencePoints);
     }
-    public void calculateAgilityGainedFromLevel1toCurrentWithItems() {
-        agilityGainedFromLevel1toCurrentWithItems = calculateAttributeGainWithItems("Agility");
+    public void calculateAgilityGainedUntilCurrentLevelWithItems() {
+        agilityGainedUntilCurrentLevelWithItems = calculateAttributeGainWithItems(AGILITY);
     }
-    public void calculateStrengthGainedFromLevel1toCurrentWithItems() {
-        strenghtGainedFromLevel1toCurrentWithItems = calculateAttributeGainWithItems("Strength");
+    public void calculateStrengthGainedUntilCurrentLevelWithItems() {
+        strenghtGainedUntilCurrentLevelWithItems = calculateAttributeGainWithItems(STRENGTH);
     }
-    public void calculateIntelligenceGainedFromLevel1toCurrentWithItems() {
-        intelligenceGainedFromLevel1toCurrentWithItems = calculateAttributeGainWithItems("Intelligence");
+    public void calculateIntelligenceGainedUntilCurrentLevelWithItems() {
+        intelligenceGainedUntilCurrentLevelWithItems = calculateAttributeGainWithItems(INTELLIGENCE);
     }
 
 

@@ -4,7 +4,7 @@ import org.example.ItemClass.Item;
 import org.example.SwingComponents.HeroUpdateListener;
 import org.example.SwingComponents.ItemUpdateListener;
 import org.example.SwingComponents.NeutralUpdateListener;
-import org.example.WebScrape.DataFetcher;
+import org.example.DataFetch.DataFetcher;
 import org.example.HeroClass.Hero;
 
 import javax.swing.*;
@@ -130,7 +130,7 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
 
                     boolean deletes = button.getText().equals("X");
 
-                    Item item = new Item("");
+                    Item item = new Item();
                     if(!deletes){
                         item = DataFetcher.getItem(button.getText());
 

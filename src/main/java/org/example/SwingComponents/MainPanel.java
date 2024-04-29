@@ -3,9 +3,10 @@ package org.example.SwingComponents;
 import org.example.Fight;
 import org.example.HeroClass.Hero;
 import org.example.ItemClass.Item;
+import org.example.ItemClass.ItemTypes;
 import org.example.SwingComponents.ButtonDisplayer.OptionDisplayerFrame;
 import org.example.SwingComponents.Buttons.RoundButton;
-import org.example.WebScrape.DataFetcher;
+import org.example.DataFetch.DataFetcher;
 
 import javax.swing.*;
 import javax.swing.text.MaskFormatter;
@@ -13,17 +14,24 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
-import static org.example.WebScrape.DataFetcher.MAXIMUM_HERO_LEVEL;
+import static org.example.ItemClass.ItemTypes.NEUTRAL;
+import static org.example.ItemClass.ItemTypes.PURCHASABLE;
+import static org.example.DataFetch.DataFetcher.MAXIMUM_HERO_LEVEL;
 
 
 public class MainPanel extends JPanel implements ActionListener,HeroUpdateListener,ItemUpdateListener,NeutralUpdateListener{
 
-    private static final List<String> HERO_NAMES = DataFetcher.getAllDotaHeroNames();
-    private static final List<String> ITEM_NAMES = DataFetcher.getAllItems();
-    private static final List<String> NEUTRAL_ITEM_NAMES = DataFetcher.getAllNeutralItems();
+    private static final List<String> HERO_NAMES;
+    static {
+        HERO_NAMES = DataFetcher.getAllDotaHeroNames();
+    }
+    private static final Map<ItemTypes,List<String>> ALL_ITEMS;
+    static {
+        ALL_ITEMS = DataFetcher.getItemsGroupedByType();
+    }
     private static final int SCREEN_WIDTH = 1300;
     private static final int SCREEN_HEIGHT = 700;
     private static final Dimension SCREEN_SIZE = new Dimension(SCREEN_WIDTH,SCREEN_HEIGHT);
@@ -269,7 +277,7 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
                         new OptionDisplayerFrame(
                                 this,
                                 heroes[i],
-                                ITEM_NAMES,
+                                ALL_ITEMS.get(PURCHASABLE),
                                 itemsButtons[i][j],
                                 j + 1
                         );
@@ -288,7 +296,7 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
                     new OptionDisplayerFrame(
                             this,
                             heroes[i],
-                            NEUTRAL_ITEM_NAMES,
+                            ALL_ITEMS.get(NEUTRAL),
                             neutralButtons[i]
                     );
                     lastButtonClicked = neutralButtons[i];
@@ -328,7 +336,7 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
         int selectedLevel = (int) comboBoxes[index].getSelectedItem();
 
         if (!heroes[index].heroName.equals("Choose a hero")) {
-            heroes[index].heroUpdateToMatchLevel(selectedLevel);
+            heroes[index].updateToMatchLevel(selectedLevel);
         }
     }
     private void handleFightButton(){
@@ -337,8 +345,6 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
         Fight.fightAsync(heroes[0], heroes[1], times, result -> SwingUtilities.invokeLater(() -> {
             heroWins[0].setText(String.valueOf(result[0]));
             heroWins[1].setText(String.valueOf(result[1]));
-            Fight.getCombatLogF().closeFrameAndPanel();
-            Fight.setCombatLogF(null);
         }));
 
 

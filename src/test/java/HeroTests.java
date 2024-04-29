@@ -1,9 +1,15 @@
 import org.example.Fight;
 import org.example.HeroClass.Hero;
 import org.example.ItemClass.Item;
-import org.example.WebScrape.DataFetcher;
+import org.example.DataFetch.DataFetcher;
 import org.junit.jupiter.api.*;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
+
+import static org.example.HeroClass.AttackType.MELEE;
+import static org.example.HeroClass.AttackType.RANGED;
+import static org.example.ItemClass.BonusKeywords.BONUS_AGILITY;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -20,6 +26,7 @@ public class HeroTests {
 
 
     @DisplayName("Correct attribute values")
+    @Order(1)
     @Test
     public void testForCorrectAttributesValues(){
         assertEquals(23,marci.baseStrengthPoints);
@@ -29,6 +36,7 @@ public class HeroTests {
     }
 
     @DisplayName("Correct hp/hp regen test")
+    @Order(2)
     @Test
     public void testForHpAndHpRegen(){
 
@@ -38,6 +46,7 @@ public class HeroTests {
     }
 
     @DisplayName("Correct mana/mana regen test")
+    @Order(3)
     @Test
     public void testForManaAndManaRegen(){
         assertEquals(303,marci.currentMana);
@@ -45,6 +54,7 @@ public class HeroTests {
     }
 
     @DisplayName("Attack speed related tests")
+    @Order(4)
     @Test
     public void testForAtkSpeedRelatedValues(){
         assertEquals(100,marci.baseAttackSpeed);
@@ -55,26 +65,53 @@ public class HeroTests {
     }
 
     @DisplayName("Agility related tests")
+    @Order(5)
     @Test
     public void agilityBasedTest(){
         assertEquals(3.33,marci.currentArmor);
-        marci.heroUpdateToMatchLevel(15);
+        marci.updateToMatchLevel(15);
         // Its 7.53 in the website
-        assertEquals(7.54,marci.currentArmor);
+        assertEquals(7.53,marci.currentArmor);
+    }
+    @DisplayName("Correct natural damage block on melee heroes")
+    @Order(6)
+    @Test
+    public void naturalDamageBlockMelee(){
+
+        assertEquals(marci.attackType, MELEE);
+        assertEquals(16,marci.naturalDamageBlock);
+        assertEquals(50,marci.naturalDamageBlockPercentage);
+
     }
 
+    @DisplayName("Correct natural damage block on range heroes")
+    @Order(7)
+    @Test
+    public void naturalDamageBlockRange(){
+
+        Hero sniper = new Hero();
+        DataFetcher.fillHeroStats(sniper,"Sniper");
+
+        assertEquals(sniper.attackType,RANGED);
+
+        assertEquals(0,sniper.naturalDamageBlock);
+        assertEquals(0,sniper.naturalDamageBlockPercentage);
+
+    }
     @DisplayName("Level 1 and 15 Universal damage")
+    @Order(8)
     @Test
     public void universalDamageTest(){
         assertEquals(50,marci.currentDamageLow);
         assertEquals(56,marci.currentDamageHigh);
 
-        marci.heroUpdateToMatchLevel(15);
+        marci.updateToMatchLevel(15);
         assertEquals(112,marci.currentDamageLow);
         assertEquals(118,marci.currentDamageHigh);
     }
 
     @DisplayName("Level 1 and 15 Agility damage")
+    @Order(9)
     @Test
     public void agilityDamageTest(){
 
@@ -84,12 +121,13 @@ public class HeroTests {
         assertEquals(51,arcWarden.currentDamageLow);
         assertEquals(57,arcWarden.currentDamageHigh);
 
-        arcWarden.heroUpdateToMatchLevel(15);
+        arcWarden.updateToMatchLevel(15);
         assertEquals(93,arcWarden.currentDamageLow);
         assertEquals(99,arcWarden.currentDamageHigh);
     }
 
     @DisplayName("Level 1 and 15 Strength damage")
+    @Order(10)
     @Test
     public void strengthDamageTest(){
 
@@ -99,12 +137,13 @@ public class HeroTests {
         assertEquals(50,alchemist.currentDamageLow);
         assertEquals(56,alchemist.currentDamageHigh);
 
-        alchemist.heroUpdateToMatchLevel(15);
+        alchemist.updateToMatchLevel(15);
         assertEquals(87,alchemist.currentDamageLow);
         assertEquals(93,alchemist.currentDamageHigh);
     }
 
     @DisplayName("Level 1 and 15 Intelligence damage")
+    @Order(11)
     @Test
     public void intelligenceDamageTest(){
 
@@ -114,32 +153,55 @@ public class HeroTests {
         assertEquals(47,pugna.currentDamageLow);
         assertEquals(54,pugna.currentDamageHigh);
 
-        pugna.heroUpdateToMatchLevel(15);
+        pugna.updateToMatchLevel(15);
         assertEquals(119,pugna.currentDamageLow);
         assertEquals(126,pugna.currentDamageHigh);
     }
-    @DisplayName("Test correct natural damage block on melee heroes")
     @Test
-    public void naturalDamageBlockMelee(){
+    @Order(12)
+    public void testOnTerrorbladeWithAlacrityOnLevel8Matches(){
+        Hero tb = new Hero();
+        DataFetcher.fillHeroStats(tb,"Terrorblade");
+        tb.updateToMatchLevel(8);
 
-        assertTrue(marci.isMelee);
-        assertEquals(16,marci.naturalDamageBlock);
-        assertEquals(50,marci.naturalDamageBlockPercentage);
 
+        Item item = DataFetcher.getItem("blade_of_alacrity");
+        tb.updateHerosItem(item,true,3);
+        System.out.println(tb.itemValues.get(BONUS_AGILITY));
+
+        assertEquals(15,Math.round(tb.currentArmor));
     }
 
-    @DisplayName("Test correct natural damage block on range heroes")
     @Test
-    public void naturalDamageBlockRange(){
+    @Order(13)
+    public void testOnTerrorbladeWithAlacrityAndBladeMailOnLevel8Matches(){
+        Hero tb = new Hero();
+        DataFetcher.fillHeroStats(tb,"Terrorblade");
+        tb.updateToMatchLevel(8);
 
-        Hero sniper = new Hero();
-        DataFetcher.fillHeroStats(sniper,"Sniper");
+        Item item = DataFetcher.getItem("blade_of_alacrity");
+        Item item2 = DataFetcher.getItem("blade_mail");
+        tb.updateHerosItem(item,true,3);
+        tb.updateHerosItem(item2,true,4);
 
-        assertFalse(sniper.isMelee);
+        assertEquals(22,Math.round(tb.currentArmor));
+    }
 
-        assertEquals(0,sniper.naturalDamageBlock);
-        assertEquals(0,sniper.naturalDamageBlockPercentage);
+    @Test
+    @Order(14)
+    public void testButterfliesOnLevel16Templar(){
 
+        Hero ta = new Hero();
+        DataFetcher.fillHeroStats(ta,"Templar Assassin");
+        ta.updateToMatchLevel(16);
+
+        Item item = DataFetcher.getItem("butterfly");
+        Item item2 = DataFetcher.getItem("butterfly");
+
+        ta.updateHerosItem(item,true,1);
+        ta.updateHerosItem(item2,true,2);
+
+        assertEquals(337 , ta.hudAttackSpeed);
     }
 
     @DisplayName("Testing one sided fight")
@@ -148,8 +210,9 @@ public class HeroTests {
         Hero puck = new Hero();
         DataFetcher.fillHeroStats(puck,"Puck");
 
-        marci.heroUpdateToMatchLevel(15);
-
+        marci.updateToMatchLevel(15);
+        System.out.println(marci.currentAttackSpeed + " as");
+        System.out.println(puck.currentAttackSpeed + " asP");
         int[] res = Fight.fight(marci , puck,1);
         int[] res2 = Fight.fight(puck , marci,1);
 
@@ -162,7 +225,7 @@ public class HeroTests {
     public void testOneSidedFight15Times(){
         Hero puck = new Hero();
         DataFetcher.fillHeroStats(puck,"Puck");
-        marci.heroUpdateToMatchLevel(15);
+        marci.updateToMatchLevel(15);
 
         Item divine1 = DataFetcher.getItem("Divine Rapier");
         Item divine2 = DataFetcher.getItem("Divine Rapier");
@@ -186,52 +249,11 @@ public class HeroTests {
 
         DataFetcher.fillHeroStats(ck1,"Chaos Knight");
         DataFetcher.fillHeroStats(ck2,"Chaos Knight");
-
         int[] res = Fight.fight(ck1,ck2,15);
-
+        System.out.println(Arrays.toString(res));
         assertNotEquals(0,res[0]);
         assertNotEquals(0,res[1]);
     }
 
-    @Test
-    public void testOnTerrorbladeWithAlacrityOnLevel8Matches(){
-        Hero tb = new Hero();
-        DataFetcher.fillHeroStats(tb,"Terrorblade");
-        tb.heroUpdateToMatchLevel(8);
 
-        Item item = DataFetcher.getItem("Blade of Alacrity");
-        tb.updateHerosItem(item,true,3);
-
-        assertEquals(15,Math.round(tb.currentArmor));
-    }
-
-    @Test
-    public void testOnTerrorbladeWithAlacrityAndBladeMailOnLevel8Matches(){
-        Hero tb = new Hero();
-        DataFetcher.fillHeroStats(tb,"Terrorblade");
-        tb.heroUpdateToMatchLevel(8);
-
-        Item item = DataFetcher.getItem("Blade of Alacrity");
-        Item item2 = DataFetcher.getItem("Blade Mail");
-        tb.updateHerosItem(item,true,3);
-        tb.updateHerosItem(item2,true,4);
-
-        assertEquals(22,Math.round(tb.currentArmor));
-    }
-
-    @Test
-    public void testButterfliesOnLevel16Templar(){
-
-        Hero ta = new Hero();
-        DataFetcher.fillHeroStats(ta,"Templar Assassin");
-        ta.heroUpdateToMatchLevel(16);
-
-        Item item = DataFetcher.getItem("Butterfly");
-        Item item2 = DataFetcher.getItem("Butterfly");
-
-        ta.updateHerosItem(item,true,1);
-        ta.updateHerosItem(item2,true,2);
-
-        assertEquals(337 , ta.hudAttackSpeed);
-    }
 }

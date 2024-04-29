@@ -14,5 +14,6 @@ public enum PrimaryAttribute {
     STRENGTH ,
     AGILITY ,
     INTELLIGENCE ,
-    UNIVERSAL
+    UNIVERSAL ,
+    UNKNOWN
 }

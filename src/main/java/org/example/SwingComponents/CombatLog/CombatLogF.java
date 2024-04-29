@@ -9,12 +9,16 @@ import java.util.*;
 import java.util.Timer;
 import java.awt.event.WindowEvent;
 
+import static org.example.SwingComponents.CombatLog.LogMessages.ATTACK_LOG;
+import static org.example.SwingComponents.CombatLog.LogMessages.KILL_LOG;
+import static org.example.SwingComponents.CombatLog.LogTypes.KILL;
+
 public class CombatLogF {
 
 
     private JFrame combatLogFrame;
     private JPanel combatLogPanel;
-
+    private static int innerJLabels;
     private static final int SCREEN_WIDTH = 600;
     private static final int SCREEN_HEIGHT = 250;
     private static final Dimension SCREEN_SIZE = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -32,6 +36,7 @@ public class CombatLogF {
             "rgb(52, 248, 255)",
             "rgb(0, 204, 255)"
     };
+    private static final Color BACKGROUND_COLOR = new Color(40, 42, 44);
 
     private final Random random;
     private final Map<Hero, String> heroColor;
@@ -47,7 +52,7 @@ public class CombatLogF {
         combatLogPanel = new JPanel();
         combatLogPanel.setLayout(new BoxLayout(combatLogPanel, BoxLayout.Y_AXIS));
 
-        combatLogPanel.setBackground(new Color(40, 42, 44));
+        combatLogPanel.setBackground(BACKGROUND_COLOR);
 
         timer = new Timer();
 
@@ -60,7 +65,7 @@ public class CombatLogF {
 
         combatLogPanel.setVisible(true);
 
-        combatLogFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        combatLogFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         combatLogFrame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -72,8 +77,16 @@ public class CombatLogF {
         combatLogFrame.pack();
         combatLogFrame.setVisible(true);
     }
-
-    public void addLog(Map<String,String> logs, Hero attacker, Hero defendant,String status){
+    public void addLog(Hero attacker, Hero defendant, LogTypes type){
+        addLog(Collections.emptyMap(),attacker,defendant,type);
+    }
+    public void addLog(
+            Map<String,String> logs,
+            Hero attacker,
+            Hero defendant,
+            LogTypes type
+    ){
+        if (logs.isEmpty() && attacker.isDead) return;
 
         if(heroColor.isEmpty()){
             String firstHeroColor = COLORS[random.nextInt(COLORS.length)];
@@ -87,68 +100,74 @@ public class CombatLogF {
         }
 
 
-
-        String log = switch (status){
-            case "Attack" -> generateAttackLog(logs, attacker, defendant);
-            case "Kill" -> generateKillLog(attacker, defendant);
+        String log = switch (type){
+            case PHYSICAL_HIT -> generateAttackLog(logs, attacker, defendant);
+            case KILL -> generateKillLog(attacker, defendant);
             default -> "Unexpected value";
         };
-
-
+        System.out.println(log);
         JLabel label = new JLabel(log);
 
-        label.setFont(LOGS_FONT);
-        label.setForeground(Color.WHITE);
+        addLabelToPanel(label,combatLogPanel);
+        if(type == KILL)
+            addEmptySpace(combatLogPanel);
 
-        combatLogPanel.add(label);
-        combatLogPanel.revalidate();
+    }
+    private void addLabelToPanel(JLabel log,JPanel panel){
+        log.setFont(LOGS_FONT);
+        log.setForeground(Color.WHITE);
+
+        panel.add(log);
+        panel.revalidate();
 
         // Schedule task to remove label after lifespan expires
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                combatLogPanel.remove(label);
-                combatLogPanel.revalidate(); // Revalidate the panel after removing label
-                combatLogPanel.repaint(); // Repaint the panel to reflect changes
+                panel.remove(log);
+                panel.revalidate(); // Revalidate the panel after removing label
+                panel.repaint(); // Repaint the panel to reflect changes
+                innerJLabels--;
+                if (innerJLabels == 0)
+                    closeFrameAndPanel();
+
             }
         }, TEXT_LIFESPAN);
+        innerJLabels++;
     }
 
     private String generateAttackLog(Map<String,String> logs, Hero attacker, Hero defendant){
         String damageReceivedLog = logs.get("DamageReceived");
         String transitionLog = logs.get("Transition");
 
-        return """
-             <html>
-                <font color='%s'>%s</font>\s
-                hits\s
-                <font color='%s'>%s</font>\s
-                for\s
-                <font color='rgb(250, 4, 10)'>%s</font>\s
-                <font color='rgb(30, 255, 0)'>%s</font>
-             </html>
-             """.formatted(heroColor.get(attacker), attacker.heroName,
-                heroColor.get(defendant), defendant.heroName,
-                damageReceivedLog, transitionLog);
+        return ATTACK_LOG.getMessage().formatted(
+                heroColor.get(attacker),
+                attacker.heroName,
+                heroColor.get(defendant),
+                defendant.heroName,
+                damageReceivedLog, transitionLog
+        );
     }
 
     private String generateKillLog(Hero attacker, Hero defendant){
-
-        return """
-             <html>
-                <font color='%s'>%s</font>\s
-                is killed by\s
-                <font color='%s'>%s</font>!
-             </html>
-             """.formatted(heroColor.get(defendant), defendant.heroName,
-                heroColor.get(attacker), attacker.heroName);
+        return KILL_LOG.getMessage().formatted(
+                heroColor.get(defendant),
+                defendant.heroName,
+                heroColor.get(attacker),
+                attacker.heroName
+        );
     }
 
-
+    private void addEmptySpace(JPanel panel){
+        for (int i = 0; i < 7; i++)
+            addLabelToPanel(new JLabel(""),panel);
+    }
 
 
     public void closeFrameAndPanel() {
         // Close the frame and panel
         combatLogFrame.dispose();
     }
+
+
 }
