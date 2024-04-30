@@ -27,7 +27,7 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
     private final List<JButton> buttons = new ArrayList<>();
     private Hero hero;
     private JButton buttonClicked;
-    private int inventorySlot;
+    private int inventorySlot = 0;
 
     // Display for heroes
     public OptionDisplayerPanel(
@@ -79,8 +79,6 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
 
         scrollPane.getHorizontalScrollBar().setUnitIncrement(50);
         scrollPane.getHorizontalScrollBar().setBlockIncrement(40);
-
-
 
 
         for (String name : options) {

@@ -467,7 +467,7 @@ public class Hero {
     public void updateHerosItem(Item item , boolean add,int inventorySlot) {
         if(item == null) return;
 
-        if(inventorySlot <= 0 || inventorySlot > 6) {
+        if(inventorySlot < 0 || inventorySlot > 6) {
             throw new IllegalArgumentException("Inventory slot not vlaid");
         }
 

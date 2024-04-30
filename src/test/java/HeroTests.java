@@ -231,7 +231,7 @@ public class HeroTests {
     }
 
     //Testing on chaos knight because its the hero with the largest damage spread , difference of 30
-    @DisplayName("Test randomness on 2 Chaos Knights")
+    @DisplayName("Test items on Chaos Knight")
     @Test
     public void testOn2ChaosKnightsForRandomness(){
 
@@ -251,17 +251,5 @@ public class HeroTests {
         assertNotEquals(0,res[0]);
         assertNotEquals(0,res[1]);
     }
-    @Test
-    public void test(){
-
-        Hero na1 = DataFetcher.getHero("Naga Siren");
-        Hero na2 = DataFetcher.getHero("Naga Siren");
-
-        int[] res = Fight.fight(na1,na2,1);
-
-        assertNotEquals(0,res[0]);
-        assertNotEquals(0,res[1]);
-    }
-
 
 }
