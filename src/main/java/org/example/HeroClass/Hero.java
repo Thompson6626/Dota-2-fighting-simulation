@@ -13,8 +13,9 @@ import static org.example.ItemClass.BonusKeywords.*;
 
 
 public class Hero {
+    public static final String DEFAULT_NAME = "Choose a hero";
     private static final int ACTIVE_INVENTORY_SLOTS = 6;
-    public String heroName = "Choose a hero";
+    public String heroName = DEFAULT_NAME;
 
     public int baseHp;
     public double baseHpRegen;
@@ -93,11 +94,19 @@ public class Hero {
     static {
         KAYA_SANGE_YASHA_DERIVATIVES = DataFetcher. getSangeKayaYashaDerivatives();
     }
+    private static final Set<String> SANGE_DERIVATIVES;
+    static {
+        SANGE_DERIVATIVES = new HashSet<>(KAYA_SANGE_YASHA_DERIVATIVES.get("sange"));
+    }
     private static final List<Integer> PLUS_TWO_ATTRIBUTES = List.of(26,24,23,22,21,19,17);
     private final Random RANDOM_GENERATOR;
     public boolean isDead = false;
+    public Hero(){
+        this(DEFAULT_NAME);
+    }
 
-    public Hero() {
+    public Hero(String name) {
+        heroName = name;
         RANDOM_GENERATOR = new Random();
 
         itemValues = new HashMap<>();
@@ -128,6 +137,10 @@ public class Hero {
         itemValues.put(BONUS_SPELL_LIFESTEAL_AMP,0.0); //? Percentage
         itemValues.put(BONUS_STATUS_RESISTANCE,new HashMap<String, QuantityValueWrapper>()); //? Percentage  // Sange based
 
+        itemValues.put(BONUS_CRIT_CHANCE,new HashMap<String,QuantityValueWrapper>());
+        itemValues.put(BONUS_CRIT_MULTIPLIER , new HashMap<String,QuantityValueWrapper>());
+
+
         items = new HashMap<>(ACTIVE_INVENTORY_SLOTS);
 
         for(int i = 1; i <= ACTIVE_INVENTORY_SLOTS; i++){
@@ -141,48 +154,73 @@ public class Hero {
             int randomDamage = RANDOM_GENERATOR.nextInt((currentDamageHigh - currentDamageLow) + 1) + currentDamageLow;
 
             int damage = (int) (randomDamage + (double) itemValues.get(BONUS_ATTACK_DAMAGE));
+
+            Map<String, QuantityValueWrapper> crits = (Map<String, QuantityValueWrapper>) itemValues.get(BONUS_CRIT_MULTIPLIER);
+            if (!crits.isEmpty()){
+                String maxItemName = null;
+                int maxPercentage = 0;
+                for(String itemName : crits.keySet()){
+                    if (crits.get(itemName).getValue() > maxPercentage){
+                        maxItemName = itemName;
+                        maxPercentage = (int) crits.get(itemName).getValue();
+                    }
+                }
+                int critChance = (int) ((Map<String,QuantityValueWrapper>)
+                        itemValues.get(BONUS_CRIT_CHANCE)).get(maxItemName).getValue();
+
+                if (critChance > 0 && checkChance(critChance)){
+                    damage += (int) calculatePercentage(damage,maxPercentage);
+                }
+            }
             Map<String,String> logs = enemy.receiveAttack(damage, this);
 
-            stealLife(Integer.parseInt(logs.get("DamageReceived")));
+            if ((double) itemValues.get(BONUS_LIFESTEAL) > 0.0){
+                stealLife(Integer.parseInt(logs.get("DamageReceived")));
+            }
             return logs;
         }
         return Collections.emptyMap();
     }
     private void stealLife(int damageDone){
         double lifeStealPercentage =  (Double) this.itemValues.get(BONUS_LIFESTEAL);
-        if((int) this.itemValues.get(BONUS_LIFESTEAL_AMP) > 0){
-            lifeStealPercentage += calculatePercentage(
-                    lifeStealPercentage,
-                    (int) this.itemValues.get(BONUS_LIFESTEAL_AMP)
-            );
+
+        Map<String,QuantityValueWrapper> bonusLifestealAmps = (Map<String, QuantityValueWrapper>) itemValues.get(BONUS_LIFESTEAL_AMP);
+
+        if (!bonusLifestealAmps.isEmpty()){
+            double highestFromSange = 0.0;
+            for (String itemName : bonusLifestealAmps.keySet()){
+                QuantityValueWrapper QVW = bonusLifestealAmps.get(itemName);
+                if (SANGE_DERIVATIVES.contains(itemName)){
+                    highestFromSange = Math.max(highestFromSange,QVW.getValue());
+                }else{
+                    lifeStealPercentage += calculatePercentage(lifeStealPercentage,QVW.getValue());
+                }
+            }
+            lifeStealPercentage += calculatePercentage(lifeStealPercentage,highestFromSange);
         }
-        int lifeSteal = (int) calculatePercentage(damageDone, lifeStealPercentage);
-        this.currentHp = Math.min(this.currentHp + lifeSteal , this.maxHpOnCurrentAttributes);
+
+        int lifeStolen = (int) calculatePercentage(damageDone, lifeStealPercentage);
+        this.currentHp = Math.min(this.currentHp + lifeStolen , this.maxHpOnCurrentAttributes);
     }
     public Map<String,String> receiveAttack(int damageDealtByEnemy , Hero attacker){
         // If attack is evaded
-        if(evasionChance > 0.0 && checkChance(evasionChance))
+        if(evasionChance > 0.0 && checkChance(evasionChance * 100))
             return Collections.emptyMap();
 
-        System.out.println(" 1 ");
         if(naturalDamageBlockPercentage > 0 && checkChance(naturalDamageBlockPercentage))
             damageDealtByEnemy -= naturalDamageBlock;
 
-        System.out.println(" 2 ");
 
         double damageReduced = (double) (damageDealtByEnemy * physicalDamageMultiplier);
         double damageAfterReductions = damageDealtByEnemy - damageReduced;
-        System.out.println(" 3 ");
         Map<String,String> map = Map.of(
                 "DamageReceived", String.valueOf((int) damageAfterReductions),
                 "Transition", String.format(
                         "(%d -> %d)",
-                        currentHp,
-                        currentHp - damageAfterReductions
-                )
-        );
-        System.out.println(map);
-        System.out.println(" 4 ");
+                        (int) currentHp,
+                        ((int) (currentHp - damageAfterReductions))
+                ));
+
         currentHp = roundToFixedDecimal(currentHp - damageAfterReductions,2);
 
         if (currentHp <= 0) isDead = true;
@@ -191,7 +229,7 @@ public class Hero {
     }
 
     private boolean checkChance(double chance){
-        return RANDOM_GENERATOR.nextDouble() <= chance;
+        return RANDOM_GENERATOR.nextInt(100) < chance;
     }
 
     public void updateToMatchLevel(int level){
@@ -246,14 +284,13 @@ public class Hero {
                 hpRegenOnCurrentAttributes += extraRegen;
             }
         }
-        Map<String, QuantityValueWrapper> hpRegenAmps = ( Map<String, QuantityValueWrapper>) itemValues.get(BONUS_HP_REGEN_AMP);
+        Map<String, QuantityValueWrapper> hpRegenAmps = (Map<String, QuantityValueWrapper>) itemValues.get(BONUS_HP_REGEN_AMP);
 
-        List<String> sangeDerivates = KAYA_SANGE_YASHA_DERIVATIVES.get("Sange");
         double highestFromSange = 0.0;
         if(hpRegenAmps != null && !hpRegenAmps.isEmpty()){
             for (String itemName : hpRegenAmps.keySet()){
                 QuantityValueWrapper qVW = hpRegenAmps.get(itemName);
-                if (sangeDerivates.contains(itemName)){
+                if (SANGE_DERIVATIVES.contains(itemName)){
                     highestFromSange = Math.max(highestFromSange , qVW.getValue());
                 }else{
                     double amped = calculatePercentage(hpRegenOnCurrentAttributes,qVW.getValue());
@@ -263,9 +300,6 @@ public class Hero {
             double amped = calculatePercentage(hpRegenOnCurrentAttributes,highestFromSange);
             hpRegenOnCurrentAttributes += amped;
         }
-
-
-
     }
 
     /**
@@ -424,25 +458,30 @@ public class Hero {
             BONUS_EVASION,
             BONUS_STATUS_RESISTANCE,
             BONUS_LIFESTEAL_AMP,
-            BONUS_HP_REGEN_AMP
+            BONUS_HP_REGEN_AMP,
+            BONUS_CRIT_CHANCE,
+            BONUS_CRIT_MULTIPLIER
     );
 
 
     public void updateHerosItem(Item item , boolean add,int inventorySlot) {
         if(item == null) return;
 
-        if(inventorySlot >= 1){
-            if(add) {
-                if(items.get(inventorySlot) != null)
-                    updateHerosItem(item,false,inventorySlot);
-
-                items.put(inventorySlot,item);
-            } else {
-                items.put(inventorySlot,null);
-            }
+        if(inventorySlot <= 0 || inventorySlot > 6) {
+            throw new IllegalArgumentException("Inventory slot not vlaid");
         }
 
-        for(Map<String,Object> map:item.bonuses){
+        if(add) {
+            if(items.get(inventorySlot) != null)
+                updateHerosItem(item,false,inventorySlot);
+
+            items.put(inventorySlot,item);
+        } else {
+            items.put(inventorySlot,null);
+        }
+
+
+        for(Map<String,Object> map : item.bonuses){
             // each map has 3 keys :  key,header and value
             for(String key : map.keySet()){
                 String keyVal = (String) map.get(key);
@@ -495,28 +534,30 @@ public class Hero {
             double value,
             boolean add
     ){
-        switch (key){
-            case BONUS_EVASION ->{
+        switch (key) {
+            case BONUS_EVASION -> {
                 List<Double> evasion = (List<Double>) itemValues.get(BONUS_EVASION);
 
-                if(add) evasion.add( value / 100);
-                else evasion.remove(value / 100);
-
+                if (add) evasion.add(value);
+                else evasion.remove(value);
                 calculateEvasion();
             }
-            case BONUS_PERCENTAGE_HEALTH_REGEN ->{
+            case BONUS_PERCENTAGE_HEALTH_REGEN-> {
                 // The percentage bonus as keys and the number of items that repeat as the value
-                updateQuantity(itemName,key,add,value);
+                updateQuantity(itemName, key, add, value);
                 calculateStrengthBasedBonuses();
             }
             case BONUS_HP_REGEN_AMP -> {
                 // For Hp regen Amplification
-                updateQuantity(itemName,BONUS_HP_REGEN_AMP,add,value);
+                updateQuantity(itemName, BONUS_HP_REGEN_AMP, add, value);
                 calculateStrengthBasedBonuses();
                 // For lifesteal amplification
-                updateQuantity(itemName,BONUS_LIFESTEAL_AMP,add,value);
+                updateQuantity(itemName, BONUS_LIFESTEAL_AMP, add, value);
             }
             case BONUS_STATUS_RESISTANCE -> {
+                updateQuantity(itemName, key, add, value);
+            }
+            case BONUS_CRIT_CHANCE, BONUS_CRIT_MULTIPLIER -> {
                 updateQuantity(itemName,key,add,value);
             }
         }
@@ -551,10 +592,10 @@ public class Hero {
         double tmp = 1.0;
 
         for (double value : evasion) {
-            tmp *= (1.0 - value);
+            tmp *= (1.0 - roundToFixedDecimal(value / 100,2));
         }
 
-        evasionChance = 1.0 - (1.0 - tmp);
+        evasionChance = roundToFixedDecimal(1.0 - tmp,2);
     }
 
     public void calculateAgilityGainedUntilCurrentLevel() {

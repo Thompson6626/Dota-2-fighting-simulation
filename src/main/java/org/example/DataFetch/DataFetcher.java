@@ -7,9 +7,9 @@ import org.example.ItemClass.ItemTypes;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Array;
 import java.net.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.example.HeroClass.AttackType.*;
 import static org.example.HeroClass.PrimaryAttribute.*;
@@ -17,6 +17,7 @@ import static org.example.ItemClass.ItemTypes.NEUTRAL;
 import static org.example.ItemClass.ItemTypes.PURCHASABLE;
 
 public class DataFetcher {
+    private DataFetcher(){}
     private static final List<Map<String,Object>> ALL_HEROES_INFO;
     static{
         String urlString = "https://api.opendota.com/api/heroStats";
@@ -33,13 +34,12 @@ public class DataFetcher {
             InputStream inputStream = connection.getInputStream();
 
             ObjectMapper objectMapper = new ObjectMapper();
-            matches = objectMapper.readValue(inputStream, List.class);
+            ALL_HEROES_INFO = objectMapper.readValue(inputStream, List.class);
 
             inputStream.close();
         } catch (URISyntaxException | IOException e) {
             throw new RuntimeException(e);
         }
-        ALL_HEROES_INFO = matches;
     }
     public static final int MAXIMUM_HERO_LEVEL;
     static{
@@ -114,17 +114,56 @@ public class DataFetcher {
     public static final double EXTRA_DAMAGE_PER_ATTRIBUTE_FOR_UNIVERSAL = 0.7;
 
     public static List<String> getAllDotaHeroNames() {
-        List<String> heroNames = new ArrayList<>(ALL_HEROES_INFO.size());
-        for (Map<String,Object> map: ALL_HEROES_INFO){
-            heroNames.add((String) map.get("localized_name"));
-        }
-
-        return heroNames;
+        return ALL_HEROES_INFO.stream()
+                .map(map -> {
+                    String dName = (String) map.get("localized_name");
+                    return Arrays.stream(dName.split("_"))
+                            .map(str ->  Character.toUpperCase(str.charAt(0)) + str.substring(1))
+                            .collect(Collectors.joining(" "));
+                }).toList();
+    }
+    /**
+     * Gets all item separated by its item type
+     * @see ItemTypes
+     * @return A list containing all the names of the items
+     */
+    public static Map<ItemTypes, List<String>> getItemsGroupedByType() {
+        return Collections.unmodifiableMap(
+                ALL_ITEMS.entrySet().stream()
+                .collect(Collectors.groupingBy(
+                        entry -> entry.getValue().containsKey("tier") ? NEUTRAL : PURCHASABLE,
+                        Collectors.mapping(
+                                entry -> Arrays.stream(entry.getKey().split("_"))
+                                        .map(str -> Character.toUpperCase(str.charAt(0)) + str.substring(1))
+                                        .collect(Collectors.joining(" ")),
+                                Collectors.toList()
+                        )
+                ))
+        );
     }
 
-    public static void fillHeroStats(Hero hero, String name){
-        hero.heroName = name;
+    public static Map<String,List<String>> getSangeKayaYashaDerivatives(){
+        Map<String,List<String>> swordsRelation = new HashMap<>();
+        swordsRelation.put("kaya",new ArrayList<>());
+        swordsRelation.put("sange",new ArrayList<>());
+        swordsRelation.put("yasha",new ArrayList<>());
 
+        for (String itemName : ALL_ITEMS.keySet()){
+            for (String sword : swordsRelation.keySet()){
+                if (
+                    itemName.equals(sword) ||
+                    ALL_ITEMS.get(itemName).containsKey("components") &&
+                    ALL_ITEMS.get(itemName).get("components") != null &&
+                    ((List<String>) ALL_ITEMS.get(itemName).get("components")).contains(sword)
+                ){
+                    swordsRelation.get(sword).add(itemName);
+                }
+            }
+        }
+        return Collections.unmodifiableMap(swordsRelation);
+    }
+    public static Hero getHero(String name){
+        Hero hero = new Hero(name);
         Map<String,Object> heroStats = null;
         for (Map<String,Object> map : ALL_HEROES_INFO){
             Object value = map.get("localized_name");
@@ -133,7 +172,6 @@ public class DataFetcher {
                 break;
             }
         }
-        assert heroStats != null;
 
         String mainAttr = (String) heroStats.get("primary_attr");
 
@@ -163,6 +201,7 @@ public class DataFetcher {
         hero.baseStrengthPoints = (int) heroStats.get("base_str");
         hero.baseAgilityPoints = (int) heroStats.get("base_agi");
 
+
         hero.baseMagicResistance = (int) heroStats.get("base_mr");
 
         hero.baseDamageLow = (int) heroStats.get("base_attack_min");
@@ -180,50 +219,21 @@ public class DataFetcher {
         hero.baseMana = (int) heroStats.get("base_mana");
         hero.baseManaRegen = ((Number) heroStats.get("base_mana_regen")).doubleValue();
 
+
         hero.updateToMatchLevel(1);
+
+        return hero;
     }
 
-    /**
-     * Gets all item separated by its item type
-     * @see ItemTypes
-     * @return A list containing all the names of the items
-     */
-    public static Map<ItemTypes,List<String>> getItemsGroupedByType() {
-        Map<ItemTypes,List<String>> itemNames = new EnumMap<>(ItemTypes.class);
-
-        for(String itemName : ALL_ITEMS.keySet()){
-            if (ALL_ITEMS.get(itemName).containsKey("tier")) {
-                itemNames.computeIfAbsent(NEUTRAL, e -> new ArrayList<>()).add(itemName);
-            } else {
-                itemNames.computeIfAbsent(PURCHASABLE, e -> new ArrayList<>()).add(itemName);
-            }
-        }
-        return Collections.unmodifiableMap(itemNames);
-    }
-    public static Map<String,List<String>> getSangeKayaYashaDerivatives(){
-        Map<String,List<String>> swordsRelation = new HashMap<>();
-        swordsRelation.put("Kaya",new ArrayList<>());
-        swordsRelation.put("Sange",new ArrayList<>());
-        swordsRelation.put("Yasha",new ArrayList<>());
-
-        for (String itemName : ALL_ITEMS.keySet()){
-            for (String sword : swordsRelation.keySet()){
-                if (
-                    itemName.equals(sword) || ALL_ITEMS.containsKey("components") &&
-                    ((List<String>) ALL_ITEMS.get(itemName).get("components")).contains(sword)
-                ){
-                    swordsRelation.get(sword).add(itemName);
-                }
-            }
-        }
-        return Collections.unmodifiableMap(swordsRelation);
-    }
 
     public static Item getItem(String itemName) {
         // attrib is an arraylist , each elemen in that arraylist is a linkedhashmap
         Map<String,Object> itemStats = ALL_ITEMS.getOrDefault(itemName,Collections.emptyMap());
         // Each map in the list has 3 keys (key , header and value)
-        List<Map<String,Object>> itemSts = Collections.unmodifiableList((List<Map<String, Object>>) itemStats.get("attrib"));
+        List<Map<String,Object>> itemSts = Collections.unmodifiableList(
+                (List<Map<String, Object>>) itemStats.getOrDefault("attrib" , Collections.emptyList())
+        );
+
         return new Item(itemName,itemSts);
     }
 

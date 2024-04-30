@@ -262,7 +262,6 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
                         heroes[i],
                         HERO_NAMES
                 );
-
                 lastButtonClicked = heroChooseButtons[i];
                 break;
             }
@@ -349,7 +348,6 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
 
 
     }
-
     private JFormattedTextField createPositiveIntegerField(int width) {
         JFormattedTextField textField = null;
         try {
@@ -375,8 +373,12 @@ public class MainPanel extends JPanel implements ActionListener,HeroUpdateListen
                 break;
             }
         }
+        heroes[i] = hero;
+
         // Resetting buttons text
         JButton[] buttons = itemsButtons[i];
+
+
 
         for(JButton itemButton:buttons)
             itemButton.setText("");

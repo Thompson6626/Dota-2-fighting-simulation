@@ -21,6 +21,7 @@ public class CombatLogF {
     private static int innerJLabels;
     private static final int SCREEN_WIDTH = 600;
     private static final int SCREEN_HEIGHT = 250;
+    private static final int EMPTY_SPACES = 3;
     private static final Dimension SCREEN_SIZE = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     // Panel parts
@@ -105,7 +106,6 @@ public class CombatLogF {
             case KILL -> generateKillLog(attacker, defendant);
             default -> "Unexpected value";
         };
-        System.out.println(log);
         JLabel label = new JLabel(log);
 
         addLabelToPanel(label,combatLogPanel);
@@ -159,8 +159,8 @@ public class CombatLogF {
     }
 
     private void addEmptySpace(JPanel panel){
-        for (int i = 0; i < 7; i++)
-            addLabelToPanel(new JLabel(""),panel);
+        for (int i = 0; i < EMPTY_SPACES; i++)
+            addLabelToPanel(new JLabel("\n"),panel);
     }
 
 

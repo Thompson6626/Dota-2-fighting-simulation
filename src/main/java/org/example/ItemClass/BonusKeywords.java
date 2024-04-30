@@ -12,7 +12,7 @@ public class BonusKeywords {
     public static final String BONUS_ATTACK_DAMAGE = "bonus_damage";
     public static final String BONUS_ATTACK_SPEED = "bonus_attack_speed";
     public static final String BONUS_MAGIC_RES = "magic_resistance";
-    public static final String BONUS_EVASION = "evasion";
+    public static final String BONUS_EVASION = "bonus_evasion";
     public static final String BONUS_PERCENTAGE_HEALTH_REGEN = "health_regen_pct";
     public static final String BONUS_LIFESTEAL = "lifesteal_percent";
     public static final String BONUS_HP_REGEN_AMP = "hp_regen_amp";
@@ -23,5 +23,6 @@ public class BonusKeywords {
     public static final String BONUS_ATTACK_SPEED_PERCENTAGE = "bonus_attack_speed_pct";
     public static final String BONUS_STATUS_RESISTANCE = "status_resistance";
     public static final String BONUS_MANA_REGEN_AMP = "kaya_mana_regen_multiplier";
-
+    public static final String BONUS_CRIT_CHANCE = "crit_chance";
+    public static final String BONUS_CRIT_MULTIPLIER = "crit_multiplier";
 }

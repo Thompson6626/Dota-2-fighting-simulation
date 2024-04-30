@@ -4,12 +4,10 @@ import org.example.ItemClass.Item;
 import org.example.DataFetch.DataFetcher;
 import org.junit.jupiter.api.*;
 
-import java.lang.reflect.Array;
-import java.util.Arrays;
+import javax.xml.crypto.Data;
 
 import static org.example.HeroClass.AttackType.MELEE;
 import static org.example.HeroClass.AttackType.RANGED;
-import static org.example.ItemClass.BonusKeywords.BONUS_AGILITY;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -19,9 +17,7 @@ public class HeroTests {
 
     @BeforeEach
     public void init(){
-        marci = new Hero();
-
-        DataFetcher.fillHeroStats(marci,"Marci");
+        marci =  DataFetcher.getHero("Marci");
     }
 
 
@@ -89,8 +85,8 @@ public class HeroTests {
     @Test
     public void naturalDamageBlockRange(){
 
-        Hero sniper = new Hero();
-        DataFetcher.fillHeroStats(sniper,"Sniper");
+        Hero sniper = DataFetcher.getHero("Sniper");;
+
 
         assertEquals(sniper.attackType,RANGED);
 
@@ -115,8 +111,8 @@ public class HeroTests {
     @Test
     public void agilityDamageTest(){
 
-        Hero arcWarden = new Hero();
-        DataFetcher.fillHeroStats(arcWarden,"Arc Warden");
+        Hero arcWarden = DataFetcher.getHero("Arc Warden");;
+
 
         assertEquals(51,arcWarden.currentDamageLow);
         assertEquals(57,arcWarden.currentDamageHigh);
@@ -131,8 +127,8 @@ public class HeroTests {
     @Test
     public void strengthDamageTest(){
 
-        Hero alchemist = new Hero();
-        DataFetcher.fillHeroStats(alchemist,"Alchemist");
+        Hero alchemist = DataFetcher.getHero("Alchemist");
+
 
         assertEquals(50,alchemist.currentDamageLow);
         assertEquals(56,alchemist.currentDamageHigh);
@@ -147,8 +143,8 @@ public class HeroTests {
     @Test
     public void intelligenceDamageTest(){
 
-        Hero pugna = new Hero();
-        DataFetcher.fillHeroStats(pugna,"Pugna");
+        Hero pugna = DataFetcher.getHero("Pugna");
+
 
         assertEquals(47,pugna.currentDamageLow);
         assertEquals(54,pugna.currentDamageHigh);
@@ -160,23 +156,21 @@ public class HeroTests {
     @Test
     @Order(12)
     public void testOnTerrorbladeWithAlacrityOnLevel8Matches(){
-        Hero tb = new Hero();
-        DataFetcher.fillHeroStats(tb,"Terrorblade");
+        Hero tb = DataFetcher.getHero("Terrorblade");
+
         tb.updateToMatchLevel(8);
 
 
         Item item = DataFetcher.getItem("blade_of_alacrity");
         tb.updateHerosItem(item,true,3);
-        System.out.println(tb.itemValues.get(BONUS_AGILITY));
-
         assertEquals(15,Math.round(tb.currentArmor));
     }
 
     @Test
     @Order(13)
     public void testOnTerrorbladeWithAlacrityAndBladeMailOnLevel8Matches(){
-        Hero tb = new Hero();
-        DataFetcher.fillHeroStats(tb,"Terrorblade");
+        Hero tb =DataFetcher.getHero("Terrorblade");
+
         tb.updateToMatchLevel(8);
 
         Item item = DataFetcher.getItem("blade_of_alacrity");
@@ -191,8 +185,8 @@ public class HeroTests {
     @Order(14)
     public void testButterfliesOnLevel16Templar(){
 
-        Hero ta = new Hero();
-        DataFetcher.fillHeroStats(ta,"Templar Assassin");
+        Hero ta =DataFetcher.getHero("Templar Assassin");
+
         ta.updateToMatchLevel(16);
 
         Item item = DataFetcher.getItem("butterfly");
@@ -200,19 +194,16 @@ public class HeroTests {
 
         ta.updateHerosItem(item,true,1);
         ta.updateHerosItem(item2,true,2);
-
         assertEquals(337 , ta.hudAttackSpeed);
     }
 
     @DisplayName("Testing one sided fight")
     @Test
     public void testOneSidedFight(){
-        Hero puck = new Hero();
-        DataFetcher.fillHeroStats(puck,"Puck");
+        Hero puck = DataFetcher.getHero("Puck");
+
 
         marci.updateToMatchLevel(15);
-        System.out.println(marci.currentAttackSpeed + " as");
-        System.out.println(puck.currentAttackSpeed + " asP");
         int[] res = Fight.fight(marci , puck,1);
         int[] res2 = Fight.fight(puck , marci,1);
 
@@ -223,12 +214,12 @@ public class HeroTests {
     @DisplayName("Testing one sided fight 15 times")
     @Test
     public void testOneSidedFight15Times(){
-        Hero puck = new Hero();
-        DataFetcher.fillHeroStats(puck,"Puck");
+        Hero puck = DataFetcher.getHero("Puck");
+
         marci.updateToMatchLevel(15);
 
-        Item divine1 = DataFetcher.getItem("Divine Rapier");
-        Item divine2 = DataFetcher.getItem("Divine Rapier");
+        Item divine1 = DataFetcher.getItem("rapier");
+        Item divine2 = DataFetcher.getItem("rapier");
         marci.updateHerosItem(divine1,true,1);
         marci.updateHerosItem(divine2,true,2);
 
@@ -244,13 +235,30 @@ public class HeroTests {
     @Test
     public void testOn2ChaosKnightsForRandomness(){
 
-        Hero ck1 = new Hero();
-        Hero ck2 = new Hero();
+        Hero ck1 = DataFetcher.getHero("Chaos Knight");
+        Hero ck2 = DataFetcher.getHero("Chaos Knight");
 
-        DataFetcher.fillHeroStats(ck1,"Chaos Knight");
-        DataFetcher.fillHeroStats(ck2,"Chaos Knight");
+
+
+        Item sat = DataFetcher.getItem("satanic");
+        ck1.updateHerosItem(sat,true,2);
+        Item sange = DataFetcher.getItem("sange_and_yasha");
+        ck1.updateHerosItem(sange,true,1);
+        Item daed = DataFetcher.getItem("greater_crit");
+        ck1.updateHerosItem(daed,true,3);
         int[] res = Fight.fight(ck1,ck2,15);
-        System.out.println(Arrays.toString(res));
+
+        assertNotEquals(0,res[0]);
+        assertNotEquals(0,res[1]);
+    }
+    @Test
+    public void test(){
+
+        Hero na1 = DataFetcher.getHero("Naga Siren");
+        Hero na2 = DataFetcher.getHero("Naga Siren");
+
+        int[] res = Fight.fight(na1,na2,1);
+
         assertNotEquals(0,res[0]);
         assertNotEquals(0,res[1]);
     }

@@ -80,7 +80,13 @@ public class Fight {
                     throw new RuntimeException(e);
                 }
             }
-            return Integer.compare((int) secondHero.currentHp, (int) firstHero.currentHp);
+            int result = Integer.compare((int) secondHero.currentHp, (int) firstHero.currentHp);
+            if(result < 0){
+                combatLogF.addLog(firstHero,secondHero,KILL);
+            }else if(result > 0){
+                combatLogF.addLog(secondHero,firstHero,KILL);
+            }
+            return result;
         });
 
         int result = 0;
@@ -107,7 +113,6 @@ public class Fight {
     }
     private static ScheduledFuture<?> scheduleHeroAttack(ScheduledExecutorService executor, Hero attacker, Hero target) {
         long attackCooldown = Math.round(attacker.currentAttackRate);
-
         return executor.scheduleAtFixedRate(() -> {
             Map<String, String> logs = attacker.attackEnemyHero(target);
             combatLogF.addLog(logs, attacker, target, PHYSICAL_HIT);

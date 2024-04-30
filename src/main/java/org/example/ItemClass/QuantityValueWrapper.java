@@ -22,7 +22,6 @@ public class QuantityValueWrapper {
     public int getQuantity() {
         return quantity;
     }
-
     @Override
     public String toString() {
         return "CountValueWrapper{" +
