@@ -1,8 +1,10 @@
 import org.example.Fight;
 import org.example.HeroClass.Hero;
+import org.example.ItemClass.BuffKeywords;
 import org.example.ItemClass.Item;
 import org.example.DataFetch.DataFetcher;
 import org.junit.jupiter.api.*;
+
 
 import javax.xml.crypto.Data;
 
@@ -28,7 +30,6 @@ public class HeroTests {
         assertEquals(23,marci.baseStrengthPoints);
         assertEquals(20,marci.baseAgilityPoints);
         assertEquals(19,marci.baseIntelligencePoints);
-
     }
 
     @DisplayName("Correct hp/hp regen test")
@@ -185,7 +186,7 @@ public class HeroTests {
     @Order(14)
     public void testButterfliesOnLevel16Templar(){
 
-        Hero ta =DataFetcher.getHero("Templar Assassin");
+        Hero ta = DataFetcher.getHero("Templar Assassin");
 
         ta.updateToMatchLevel(16);
 
@@ -194,6 +195,7 @@ public class HeroTests {
 
         ta.updateHerosItem(item,true,1);
         ta.updateHerosItem(item2,true,2);
+        System.out.println(ta.evasionChance);
         assertEquals(337 , ta.hudAttackSpeed);
     }
 
@@ -233,23 +235,39 @@ public class HeroTests {
     //Testing on chaos knight because its the hero with the largest damage spread , difference of 30
     @DisplayName("Test items on Chaos Knight")
     @Test
-    public void testOn2ChaosKnightsForRandomness(){
+    public void testItemsOnChaosKnight(){
 
         Hero ck1 = DataFetcher.getHero("Chaos Knight");
         Hero ck2 = DataFetcher.getHero("Chaos Knight");
 
-
-
         Item sat = DataFetcher.getItem("satanic");
         ck1.updateHerosItem(sat,true,2);
+        assertEquals(30,(double) ck1.itemValues.get(BuffKeywords.BONUS_LIFESTEAL));
         Item sange = DataFetcher.getItem("sange_and_yasha");
         ck1.updateHerosItem(sange,true,1);
+        assertEquals(1.2,ck1.restorationMultiplier);
         Item daed = DataFetcher.getItem("greater_crit");
         ck1.updateHerosItem(daed,true,3);
-        int[] res = Fight.fight(ck1,ck2,15);
 
-        assertNotEquals(0,res[0]);
-        assertNotEquals(0,res[1]);
+        int[] res = Fight.fight(ck1,ck2,2);
+        assertEquals(2,res[0]);
     }
+    @DisplayName("Test restoration multiplier")
+    @Test
+    public void testRestorationMultiplierValuesAreCorrect(){
+        Hero ck1 = DataFetcher.getHero("Chaos Knight");
 
+        assertEquals(1,ck1.restorationMultiplier);
+        Item skadi = DataFetcher.getItem("skadi");
+        marci.updateHerosItem(skadi,true,2);
+
+        Item shivasGuard = DataFetcher.getItem("shivas_guard");
+        marci.updateHerosItem(shivasGuard,true,3);
+
+        Item sange = DataFetcher.getItem("sange");
+        ck1.updateHerosItem(sange,true,1);
+
+        int[] res = Fight.fight(marci,ck1,1);
+        assertEquals(0.65,ck1.restorationMultiplier);
+    }
 }

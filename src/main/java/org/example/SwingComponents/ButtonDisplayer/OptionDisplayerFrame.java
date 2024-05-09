@@ -32,10 +32,9 @@ public class OptionDisplayerFrame extends JFrame {
             ItemUpdateListener listener,
             Hero hero,
             List<String> itemNames,
-            JButton buttonClicked ,
             int inventorySlot
     ) {
-        chooserPanel = new OptionDisplayerPanel(listener,hero,itemNames,buttonClicked,inventorySlot);
+        chooserPanel = new OptionDisplayerPanel(listener,hero,itemNames, inventorySlot);
         this.add(chooserPanel);
         initializeGUI("an item");
     }
@@ -43,10 +42,9 @@ public class OptionDisplayerFrame extends JFrame {
     public OptionDisplayerFrame(
             NeutralUpdateListener listener,
             Hero hero,
-            List<String> itemNames,
-            JButton buttonClicked
+            List<String> itemNames
     ) {
-        chooserPanel = new OptionDisplayerPanel(listener,hero,itemNames,buttonClicked);
+        chooserPanel = new OptionDisplayerPanel(listener,hero,itemNames);
         this.add(chooserPanel);
         initializeGUI("a neutral item");
     }

@@ -26,7 +26,6 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
     private static final int ROWS = 10;
     private final List<JButton> buttons = new ArrayList<>();
     private Hero hero;
-    private JButton buttonClicked;
     private int inventorySlot = 0;
 
     // Display for heroes
@@ -45,13 +44,11 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
             ItemUpdateListener itemListener,
             Hero hero,
             List<String> itemNames,
-            JButton buttonClicked ,
             int itemSlot
     ){
         this.itemListener = itemListener;
         this.hero = hero;
         this.options = itemNames;
-        this.buttonClicked = buttonClicked;
         this.inventorySlot = itemSlot;
         initializeGUI();
     }
@@ -60,13 +57,11 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
     public OptionDisplayerPanel(
             NeutralUpdateListener neutralListener,
             Hero hero,
-            List<String> neutralNames,
-            JButton buttonClicked
+            List<String> neutralNames
     ){
         this.neutralListener = neutralListener;
         this.hero = hero;
         this.options = neutralNames;
-        this.buttonClicked = buttonClicked;
         initializeGUI();
     }
 
@@ -74,21 +69,13 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
     private void initializeGUI() {
         this.setLayout(new BorderLayout());
 
+
         JPanel buttonPanel = new JPanel(new GridLayout(ROWS,COLUMNS));
         JScrollPane scrollPane = new JScrollPane(buttonPanel);
 
         scrollPane.getHorizontalScrollBar().setUnitIncrement(50);
         scrollPane.getHorizontalScrollBar().setBlockIncrement(40);
 
-
-        for (String name : options) {
-            JButton button = new JButton(name);
-            button.setFocusable(false);
-            button.setFont(NAME_FONT);
-            button.addActionListener(this);
-            buttonPanel.add(button);
-            buttons.add(button);
-        }
         if(itemListener != null || neutralListener != null){
             JButton deleteButton = new JButton("X");
             deleteButton.setForeground(Color.RED);
@@ -98,6 +85,16 @@ public class OptionDisplayerPanel extends JPanel implements ActionListener {
             buttonPanel.add(deleteButton);
             buttons.add(deleteButton);
         }
+
+        for (String name : options){
+            JButton button = new JButton(name);
+            button.setFocusable(false);
+            button.setFont(NAME_FONT);
+            button.addActionListener(this);
+            buttonPanel.add(button);
+            buttons.add(button);
+        }
+
 
 
         this.add(scrollPane, BorderLayout.CENTER);

@@ -1,17 +1,13 @@
 package org.example.SwingComponents.CombatLog;
 
+import org.example.DataFetch.Utils;
 import org.example.HeroClass.Hero;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.util.*;
 import java.util.Timer;
-import java.awt.event.WindowEvent;
+import java.util.*;
 
-import static org.example.SwingComponents.CombatLog.LogMessages.ATTACK_LOG;
-import static org.example.SwingComponents.CombatLog.LogMessages.KILL_LOG;
-import static org.example.SwingComponents.CombatLog.LogTypes.KILL;
 
 public class CombatLogF {
 
@@ -19,15 +15,20 @@ public class CombatLogF {
     private JFrame combatLogFrame;
     private JPanel combatLogPanel;
     private static int innerJLabels;
-    private static final int SCREEN_WIDTH = 600;
-    private static final int SCREEN_HEIGHT = 250;
-    private static final int EMPTY_SPACES = 3;
-    private static final Dimension SCREEN_SIZE = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
-
+    private static final int FRAME_WIDTH = 600;
+    private static final int FRAME_HEIGHT = 250;
+    private static final Dimension COMBAT_LOG_FRAME_SIZE = new Dimension(FRAME_WIDTH, FRAME_HEIGHT);
+    private static final int MIDDLE_WIDTH;
+    private static final int MIDDLE_HEIGHT;
+    static {
+        Dimension SCREEN_SIZE = Toolkit.getDefaultToolkit().getScreenSize();
+        MIDDLE_WIDTH = (int) ((SCREEN_SIZE.getWidth() - FRAME_WIDTH) / 2.0);
+        MIDDLE_HEIGHT = (int) ((SCREEN_SIZE.getHeight() - FRAME_HEIGHT) / 2.0);
+    }
     // Panel parts
     private static final int TEXT_LIFESPAN = 18000; // Milliseconds
 
-    private final Timer timer;
+    private static Timer timer;
 
     private static final Font LOGS_FONT = new Font("Cascadia Code", Font.PLAIN, 15);
     private static final String[] COLORS = {
@@ -38,15 +39,13 @@ public class CombatLogF {
             "rgb(0, 204, 255)"
     };
     private static final Color BACKGROUND_COLOR = new Color(40, 42, 44);
+    private static final Map<Hero, String> HERO_COLOR = new IdentityHashMap<>();
 
-    private final Random random;
-    private final Map<Hero, String> heroColor;
 
     public CombatLogF() {
-        heroColor = new IdentityHashMap<>();
-        random = new Random();
         combatLogFrame = new JFrame("Combat Log");
-        combatLogFrame.setPreferredSize(SCREEN_SIZE);
+        combatLogFrame.setVisible(true);
+        combatLogFrame.setPreferredSize(COMBAT_LOG_FRAME_SIZE);
         combatLogFrame.setTitle("Battle log");
         combatLogFrame.setResizable(false);
 
@@ -54,6 +53,7 @@ public class CombatLogF {
         combatLogPanel.setLayout(new BoxLayout(combatLogPanel, BoxLayout.Y_AXIS));
 
         combatLogPanel.setBackground(BACKGROUND_COLOR);
+        combatLogPanel.setVisible(true);
 
         timer = new Timer();
 
@@ -64,16 +64,7 @@ public class CombatLogF {
         scrollPane.getVerticalScrollBar().setBlockIncrement(40);
         combatLogFrame.add(scrollPane);
 
-        combatLogPanel.setVisible(true);
-
-        combatLogFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        combatLogFrame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                combatLogFrame.dispose();
-                combatLogFrame = null;
-            }
-        });
+        combatLogFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
         combatLogFrame.pack();
         combatLogFrame.setVisible(true);
@@ -89,15 +80,15 @@ public class CombatLogF {
     ){
         if (logs.isEmpty() && attacker.isDead) return;
 
-        if(heroColor.isEmpty()){
-            String firstHeroColor = COLORS[random.nextInt(COLORS.length)];
-            heroColor.put(attacker, firstHeroColor);
+        if(!HERO_COLOR.containsKey(attacker) || !HERO_COLOR.containsKey(defendant)){
+            String firstHeroColor = Utils.randomChoice(COLORS);
+            HERO_COLOR.put(attacker, firstHeroColor);
             String secondHeroColor;
             do{
-                secondHeroColor = COLORS[random.nextInt(COLORS.length)];
-            }while(secondHeroColor.equals(firstHeroColor));
+                secondHeroColor =  Utils.randomChoice(COLORS);
+            } while(secondHeroColor.equals(firstHeroColor));
 
-            heroColor.put(defendant,secondHeroColor);
+            HERO_COLOR.put(defendant,secondHeroColor);
         }
 
 
@@ -109,7 +100,7 @@ public class CombatLogF {
         JLabel label = new JLabel(log);
 
         addLabelToPanel(label,combatLogPanel);
-        if(type == KILL)
+        if(type == LogTypes.KILL)
             addEmptySpace(combatLogPanel);
 
     }
@@ -121,16 +112,18 @@ public class CombatLogF {
         panel.revalidate();
 
         // Schedule task to remove label after lifespan expires
+
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
                 panel.remove(log);
                 panel.revalidate(); // Revalidate the panel after removing label
                 panel.repaint(); // Repaint the panel to reflect changes
-                innerJLabels--;
-                if (innerJLabels == 0)
-                    closeFrameAndPanel();
 
+                innerJLabels--;
+                if (combatLogFrame != null && innerJLabels == 0){
+                    hideCombatLog();
+                }
             }
         }, TEXT_LIFESPAN);
         innerJLabels++;
@@ -140,34 +133,59 @@ public class CombatLogF {
         String damageReceivedLog = logs.get("DamageReceived");
         String transitionLog = logs.get("Transition");
 
-        return ATTACK_LOG.getMessage().formatted(
-                heroColor.get(attacker),
+        return LogMessages.ATTACK_LOG.getMessage().formatted(
+                HERO_COLOR.get(attacker),
                 attacker.heroName,
-                heroColor.get(defendant),
+                HERO_COLOR.get(defendant),
                 defendant.heroName,
                 damageReceivedLog, transitionLog
         );
     }
 
     private String generateKillLog(Hero attacker, Hero defendant){
-        return KILL_LOG.getMessage().formatted(
-                heroColor.get(defendant),
+        return LogMessages.KILL_LOG.getMessage().formatted(
+                HERO_COLOR.get(defendant),
                 defendant.heroName,
-                heroColor.get(attacker),
+                HERO_COLOR.get(attacker),
                 attacker.heroName
         );
     }
 
     private void addEmptySpace(JPanel panel){
-        for (int i = 0; i < EMPTY_SPACES; i++)
-            addLabelToPanel(new JLabel("\n"),panel);
+        addLabelToPanel(new JLabel("\n"),panel);
+        addLabelToPanel(new JLabel("--------------------------\n"),panel);
+        addLabelToPanel(new JLabel("\n"),panel);
     }
-
-
-    public void closeFrameAndPanel() {
+    public boolean getCombatLogVisibility() {
         // Close the frame and panel
-        combatLogFrame.dispose();
+        return combatLogFrame.isVisible();
+    }
+    public void makeCombatLogVisible() {
+        // Close the frame and panel
+        combatLogFrame.setVisible(true);
+    }
+    public void hideCombatLog() {
+        // Close the frame and panel
+        combatLogFrame.setVisible(false);
     }
 
 
+    public void clear() {
+        timer.cancel();
+        timer = new Timer();
+        Component[] components = combatLogPanel.getComponents();
+        for (Component component:components){
+            if(component instanceof JLabel){
+                combatLogPanel.remove(component);
+            }
+        }
+
+        innerJLabels = 1;
+    }
+
+    public void centerFrame() {
+        combatLogFrame.toFront();
+        combatLogFrame.setLocationRelativeTo(null);
+        combatLogFrame.setLocation(MIDDLE_WIDTH, MIDDLE_HEIGHT);
+    }
 }
